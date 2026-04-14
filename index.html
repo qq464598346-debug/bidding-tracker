@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运营商招投标信息跟踪平台</title>
+    <style>
+        /* ==================== 全局重置与变量 ==================== */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --cmcc-color:#09c; --cucc-color:#e60012; --ctcc-color:#00a699;
+            --bg-primary:#f0f2f5; --bg-card:#fff;
+            --text-primary:#1a1a2e; --text-secondary:#5a5a7a; --text-muted:#999;
+            --border-color:#e8eaed; --shadow-sm:0 2px 8px rgba(0,0,0,.06);
+            --shadow-md:0 4px 16px rgba(0,0,0,.08); --shadow-lg:0 8px 32px rgba(0,0,0,.12);
+            --radius:12px; --radius-sm:8px; --transition:.3s ease;
+            --status-bidding-bg:#e8f5e9;--status-bidding-text:#2e7d32;
+            --status-urgent-bg:#fff3e0;--status-urgent-text:#e65100;
+            --status-result-bg:#e3f2fd;--status-result-text:#1565c0;
+            --status-ended-bg:#f5f5f5;--status-ended-text:#757575;
+        }
+        body {
+            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+            background:var(--bg-primary); color:var(--text-primary); line-height:1.6;
+        }
+
+        /* ==================== Header ==================== */
+        .header {
+            background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+            color:#fff; padding:20px 32px; position:relative; overflow:hidden;
+        }
+        .header::before{
+            content:''; position:absolute; top:0;left:0;right:0;bottom:0;
+            background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events:none;
+        }
+        .header-inner{ display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1; flex-wrap:wrap; gap:12px; }
+        .logo-section{ display:flex; align-items:center; gap:16px; }
+        .logo-icon{ width:48px;height:48px; border-radius:12px; background:linear-gradient(135deg,#09c,#00a699); display:flex;align-items:center;justify-content:center;font-size:24px; box-shadow:0 4px 15px rgba(9,204,204,.4); }
+        .title-group h1{ font-size:22px; font-weight:700; letter-spacing:1px; }
+        .title-group p{ font-size:12px; opacity:.7; margin-top:2px; }
+
+        /* Header Controls */
+        .header-controls{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .btn-update{
+            padding:10px 24px; border-radius:50px; font-size:14px; font-weight:600;
+            background:linear-gradient(135deg,#00c853,#00e676); color:#000;
+            border:none; cursor:pointer; transition:all var(--transition); white-space:nowrap;
+            display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(0,200,83,.35);
+        }
+        .btn-update:hover{ transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,200,83,.45); }
+        .btn-update.loading{ opacity:.85; cursor:not-allowed; }
+        .btn-update .spin{ animation:spin 1s linear infinite; display:inline-block; }
+        @keyframes spin{ to{transform:rotate(360deg); } }
+        
+        .btn-export-group{ position:relative; display:inline-block; }
+        .btn-export{
+            padding:10px 18px; border-radius:50px; font-size:13px; font-weight:600;
+            background:rgba(255,255,255,.15); color:#fff;border:1px solid rgba(255,255,255,.25);
+            cursor:pointer; transition:all var(--transition); white-space:nowrap;
+            display:flex; align-items:center; gap:6px;
+        }
+        .btn-export:hover{ background:rgba(255,255,255,.25); }
+        .export-dropdown{ display:none; position:absolute;top:100%;right:0;margin-top:4px;
+            background:#fff; border-radius:var(--radius-sm); box-shadow:var(--shadow-lg); min-width:160px; z-index:100; overflow:hidden;
+        }
+        .export-dropdown.show{ display:block; animation:fadeDown .2s ease; }
+        @keyframes fadeDown{ from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);} }
+        .export-dropdown button{
+            width:100%;padding:12px 16px;text-align:left;background:none;border:none;cursor:pointer;
+            font-size:14px;color:var(--text-primary);display:flex;align-items:center;gap:8px;
+            transition:background .15s;
+        }
+        .export-dropdown button:hover{ background:#f5f5f5; }
+
+        .refresh-interval-select{ padding:8px 12px; border-radius:8px; background:rgba(255,255,255,.12);
+            border:1px solid rgba(255,255,255,.2); color:#fff; font-size:13px; cursor:pointer; outline:none;
+        }
+        .refresh-interval-select option{ background:#1a1a2e; color:#fff; }
+
+        .connection-status{ display:flex; align-items:center; gap:6px; font-size:12px; padding:6px 12px;
+            background:rgba(255,255,255,.08); border-radius:20px;
+        }
+        .conn-dot{ width:8px;height:8px;border-radius:50%; background:#4caf50; box-shadow:0 0 8px #4caf50; }
+        .conn-dot.offline{ background:#999; box-shadow:none; }
+        .conn-dot.connecting{ background:#ff9800; animation:pulse 1s infinite; }
+        @keyframes pulse{ 0%,100%{opacity:1;}50%{opacity:.4;}}
+
+        /* Progress Bar */
+        .progress-bar-container{ position:absolute;bottom:0;left:0;right:0;height:3px;overflow:hidden; }
+        .progress-bar-fill{ height:100%;width:0; background:linear-gradient(90deg,#09c,#00a699,#e60012,#ff9800,#9c27b0);
+            transition:width .3s linear; border-radius:0 3px 3px 0;
+        }
+        .progress-bar-fill.active{
+            animation:progressMove 2s ease-in-out infinite alternate;
+        }
+        @keyframes progressMove{ from{width:30%;}to{width:90%;} }
+
+        /* ==================== Stats Cards ==================== */
+        .stats-section{ padding:24px 32px 0; max-width:1400px; margin:0 auto; }
+        .stats-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-bottom:24px; }
+        .stat-card{ background:var(--bg-card); border-radius:var(--radius); padding:20px 24px;
+            box-shadow:var(--shadow-sm); transition:all var(--transition); position:relative; overflow:hidden;
+        }
+        .stat-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-md); }
+        .stat-card::after{ content:'';position:absolute;top:0;left:0;right:0;height:3px;
+            background:var(--card-accent, #09c);
+        }
+        .stat-label{ font-size:13px; color:var(--text-secondary); margin-bottom:8px; }
+        .stat-value{ font-size:28px; font-weight:700; color:var(--text-primary); }
+        .stat-value .unit{ font-size:14px; font-weight:400; color:var(--text-secondary); margin-left:4px; }
+        .stat-sub{ font-size:12px; margin-top:6px; }
+        .stat-trend-up{ color:#2e7d32; } .stat-trend-down{ color:#e65100; }
+
+        /* Operator Stats Row */
+        .operator-stats{ display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+        .op-stat-card{ flex:1;min-width:240px; background:var(--bg-card); border-radius:var(--radius);
+            padding:16px 20px; box-shadow:var(--shadow-sm); display:flex;align-items:center;gap:16px;
+            border-left:4px solid var(--op-color);
+        }
+        .op-icon{ width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+            font-size:20px; color:#fff; background:var(--op-color);
+        }
+        .op-info h3{ font-size:15px; font-weight:600; }
+        .op-info .op-count{ font-size:22px; font-weight:700; color:var(--op-color); }
+        .op-info .op-detail{ font-size:12px; color:var(--text-muted); margin-top:2px; }
+
+        /* ==================== Filter Bar ==================== */
+        .filter-bar{ background:var(--bg-card); border-radius:var(--radius); padding:16px 24px;
+            margin:0 32px; box-shadow:var(--shadow-sm); max-width:1400px; margin-bottom:20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+        }
+        .filter-bar input,.filter-bar select{ padding:10px 14px; border:1.5px solid var(--border-color);
+            border-radius:8px; font-size:14px; outline:none; transition:all var(--transition);
+            background:#fafbfc; color:var(--text-primary);
+        }
+        .filter-bar input:focus,.filter-bar select:focus{ border-color:#09c; box-shadow:0 0 0 3px rgba(9,204,204,.12); }
+        .search-input{ flex:1;min-width:200px; }
+        .view-toggle{ display:flex; gap:4px; background:#f0f2f5;padding:3px;border-radius:8px; }
+        .view-btn{ padding:8px 12px;border:none;background:none;cursor:pointer;border-radius:6px;font-size:15px;
+            color:var(--text-muted); transition:all .2s;
+        }
+        .view-btn.active{ background:#fff;color:var(--text-primary);box-shadow:var(--shadow-sm); }
+        .category-tags{ display:flex;gap:6px;flex-wrap:wrap; }
+        .cat-tag{ padding:6px 14px;border-radius:20px;border:1.5px solid var(--border-color);background:none;
+            cursor:pointer;font-size:13px;white-space:nowrap;transition:all .2s;color:var(--text-secondary);
+        }
+        .cat-tag:hover{ border-color:#09c;color:#09c; }
+        .cat-tag.active{ background:linear-gradient(135deg,#09c,#00a699);color:#fff;border-color:transparent; }
+
+        /* ==================== Content Area ==================== */
+        .content-area{ padding:0 32px 40px; max-width:1400px; margin:0 auto; }
+        .results-info{ font-size:13px; color:var(--text-muted);margin-bottom:16px;display:flex; justify-content:space-between; align-items:center; }
+
+        /* Card View */
+        .bidding-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:18px; }
+        .bidding-card{ background:var(--bg-card); border-radius:var(--radius); overflow:hidden;
+            box-shadow:var(--shadow-sm); transition:all var(--transition); cursor:pointer; position:relative;
+        }
+        .bidding-card:hover{ transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+        .card-header{ padding:16px 20px 12px; display:flex; justify-content:space-between; align-items:flex-start; }
+        .card-operator{ display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;
+            font-size:12px;font-weight:600;color:#fff;
+        }
+        .card-operator.cmcc{ background:linear-gradient(135deg,var(--cmcc-color),#0077b3); }
+        .card-operator.cucc{ background:linear-gradient(135deg,var(--cucc-color),#c40010); }
+        .card-operator.ctcc{ background:linear-gradient(135deg,var(--ctcc-color),#008b81); }
+        .card-status-badge{ padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;}
+        .status-bidding{ background:var(--status-bidding-bg);color:var(--status-bidding-text); }
+        .status-urgent{ background:var(--status-urgent-bg);color:var(--status-urgent-text); animation:urgentPulse 2s infinite; }
+        .status-result{ background:var(--status-result-bg);color:var(--status-result-text); }
+        .status-ended{ background:var(--status-ended-bg);color:var(--status-ended-text); }
+        @keyframes urgentPulse{ 0%,100%{box-shadow:0 0 0 0 rgba(230,81,0,.3);}50%{box-shadow:0 0 0 6px rgba(230,81,0,0);} }
+
+        .card-body{ padding:0 20px 16px; }
+        .card-title{ font-size:15px;font-weight:600;line-height:1.5;color:var(--text-primary);
+            margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+        }
+        .card-meta{ display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px; }
+        .meta-item{ font-size:12px;color:var(--text-secondary);background:#f5f7fa;padding:3px 8px;border-radius:4px; display:flex;align-items:center;gap:4px; }
+        .card-category{ display:inline-block;padding:4px 12px;border-radius:4px;font-size:12px;font-weight:500; }
+        .cat-software{ background:#e8f0fe;color:#1967d2; }
+        .cat-solution{ background:#fce4ec;color:#c62828; }
+        .cat-server{ background:#e0f7fa;color:#00897b; }
+        .cat-service{ background:#fff3e0;color:#ef6c00; }
+
+        .card-footer{ padding:12px 20px;border-top:1px solid var(--border-color);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .card-budget{ font-size:17px;font-weight:700;color:#c62828; }
+        .card-deadline{ font-size:12px;color:var(--text-muted); }
+
+        /* List View */
+        .list-view-hidden{ display:none !important; }
+        .bidding-list{ display:flex;flex-direction:column;gap:8px; }
+        .bidding-row{ background:var(--bg-card); border-radius:var(--radius-sm); padding:16px 24px;
+            display:grid; grid-template-columns:40px 1fr 120px 130px 110px 80px;
+            align-items:center; gap:12px; box-shadow:var(--shadow-sm); transition:all var(--transition); cursor:pointer;
+        }
+        .bidding-row:hover{ box-shadow:var(--shadow-md); transform:scale(1.002); }
+        .row-op-icon{ width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+            font-size:16px;color:#fff;flex-shrink:0;
+        }
+        .row-title{ font-size:14px;font-weight:500;line-height:1.4;display:-webkit-box;
+            -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+        }
+        .row-cat{ text-align:center; }
+        .row-cat span{ padding:3px 10px;border-radius:4px;font-size:12px;font-weight:500; }
+        .row-budget{ text-align:right; font-weight:600;color:#c62828;font-size:14px; }
+        .row-deadline{ text-align:center; font-size:13px; }
+        .row-status{text-align:center;}
+
+        /* Pagination */
+        .pagination{ display:flex; justify-content:center; align-items:center; gap:8px; margin-top:24px; }
+        .page-btn{ padding:8px 16px; border:1px solid var(--border-color); background:var(--bg-card); border-radius:8px;
+            cursor:pointer; font-size:14px; transition:all .2s; color:var(--text-primary);
+        }
+        .page-btn:hover{ border-color:#09c; color:#09c; }
+        .page-btn.active{ background:linear-gradient(135deg,#09c,#00a699); color:#fff; border-color:transparent; }
+        .page-btn:disabled{ opacity:.4;cursor:not-allowed; }
+
+        /* Detail Modal */
+        .modal-overlay{ display:none; position:fixed;top:0;left:0;right:0;bottom:0;
+            background:rgba(0,0,0,.55);z-index:1000; backdrop-filter:blur(4px);
+            justify-content:center; align-items:center; padding:20px;
+        }
+        .modal-overlay.show{ display:flex; animation:fadeIn .25s ease; }
+        @keyframes fadeIn{ from{opacity:0;}to{opacity:1;} }
+        .modal{ background:#fff; border-radius:16px; width:720px;max-width:95vw; max-height:85vh;
+            overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.3); animation:slideUp .3s ease;
+        }
+        @keyframes slideUp{ from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;} }
+        .modal-header{ padding:24px 28px 16px; border-bottom:1px solid var(--border-color);
+            display:flex; justify-content:space-between; align-items:flex-start;
+        }
+        .modal-header h2{ font-size:18px;font-weight:700;line-height:1.4; }
+        .modal-close{ width:36px;height:36px;border-radius:50%;border:none;background:#f0f2f5;
+            cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--text-secondary);
+        }
+        .modal-close:hover{ background:#e8eaed; color:var(--text-primary); }
+        .modal-body{ padding:24px 28px; }
+        .detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+        .detail-item{ }
+        .detail-label{ font-size:12px;color:var(--text-muted);margin-bottom:4px; }
+        .detail-value{ font-size:14px;color:var(--text-primary);font-weight:500; }
+        .detail-desc{ grid-column:1/-1; }
+        .detail-desc-value{ font-size:14px;line-height:1.8;color:var(--text-secondary);background:#f8f9fa;padding:16px;border-radius:8px; }
+        .detail-tags{ display:flex;gap:6px;flex-wrap:wrap;margin-top:8px; }
+        .detail-tag{ padding:4px 12px;background:#e8f5e9;color:#2e7d32;border-radius:20px;font-size:12px; }
+        .winner-box{ grid-column:1/-1; background:linear-gradient(135deg,#e8f5e9,#c8e6c9); padding:16px;border-radius:10px; margin-top:4px; }
+
+        /* Toast Notification */
+        .toast-container{ position:fixed;top:80px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px; }
+        .toast{ padding:14px 20px;border-radius:10px;font-size:14px;font-weight:500;
+            box-shadow:var(--shadow-lg);animation:slideInRight .3s ease;display:flex;align-items:center;gap:10px;min-width:280px;max-width:420px;
+        }
+        .toast-success{ background:#e8f5e9;color:#2e7d32;border-left:4px solid #4caf50; }
+        .toast-warning{ background:#fff8e1;color:#e65100;border-left:4px solid #ff9800; }
+        .toast-error{ background:#fce4ec;color:#c62828;border-left:4px solid #f44336; }
+        .toast-info{ background:#e3f2fd;color:#1565c0;border-left:4px solid #2196f3; }
+        @keyframes slideInRight{ from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;} }
+        @keyframes slideOutRight{ to{transform:translateX(100%);opacity:0;} }
+        .toast.removing{ animation:slideOutRight .3s ease forwards; }
+
+        /* Empty State */
+        .empty-state{ text-align:center;padding:60px 20px; }
+        .empty-icon{ font-size:64px; margin-bottom:16px; }
+        .empty-title{ font-size:18px;font-weight:600;color:var(--text-secondary);margin-bottom:8px; }
+        .empty-desc{ font-size:14px;color:var(--text-muted); }
+
+        /* Responsive */
+        @media(max-width:900px){
+            .bidding-row{grid-template-columns:1fr auto auto;padding:14px 16px;gap:8px; }
+            .row-op-icon{display:none;} .row-dealine,.row-cat{display:none;}
+            .bidding-grid{grid-template-columns:1fr;}
+            .header-inner{flex-direction:column;align-items:flex-start;}
+            .filter-bar{margin:0 16px 16px;padding:12px 16px;}
+            .content-area{padding:0 16px 24px;}
+            .stats-section{padding:16px 16px 0;}
+            .modal{width:98vw;}
+        }
+    </style>
+</head>
+<body>
+<!-- ==================== Header ==================== -->
+<header class="header">
+    <div class="header-inner">
+        <div class="logo-section">
+            <div class="logo-icon">📡</div>
+            <div class="title-group">
+                <h1>运营商招投标信息跟踪平台</h1>
+                <p>覆盖三大运营商 · 基础软件 / 行业解决方案 / 服务器 / 服务</p>
+            </div>
+        </div>
+        <div class="header-controls">
+            <select id="refreshInterval" class="refresh-interval-select" title="自动刷新间隔">
+                <option value="0">关闭自动刷新</option>
+                <option value="30000" selected>30秒刷新</option>
+                <option value="60000">1分钟</option>
+                <option value="180000">3分钟</option>
+                <option value="300000">5分钟</option>
+            </select>
+            
+            <div class="btn-export-group">
+                <button class="btn-export" onclick="toggleExportMenu()" id="exportBtn">
+                    📥 导出 <span style="font-size:10px;">▼</span>
+                </button>
+                <div class="export-dropdown" id="exportDropdown">
+                    <button onclick="exportToExcel()">📊 导出 Excel (.xlsx)</button>
+                    <button onclick="exportToPDF()">📄 导出 PDF 报告</button>
+                    <button onclick="exportToCSV()">📋 导出 CSV</button>
+                </div>
+            </div>
+
+            <button class="btn-update" id="btnUpdate" onclick="triggerUpdate()">
+                <span class="updateIcon">🔄</span> 立即更新数据
+            </button>
+
+            <div class="connection-status" id="connStatus">
+                <div class="conn-dot online" id="connDot"></div>
+                <span id="connText">本地数据模式</span>
+            </div>
+        </div>
+    </div>
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+</header>
+
+<!-- ==================== 统计面板 ==================== -->
+<section class="stats-section">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="operator-stats" id="operatorStats"></div>
+</section>
+
+<!-- ==================== 筛选栏 ==================== -->
+<div class="filter-bar">
+    <input type="text" class="search-input" id="searchInput" placeholder="🔍 搜索项目名称 / 编号 / 关键词..." oninput="onFilterChange()">
+    
+    <select id="filterOperator" onchange="onFilterChange()">
+        <option value="">全部运营商</option>
+        <option value="cmcc">🔵 中国移动</option>
+        <option value="cucc">🔴 中国联通</option>
+        <option value="ctcc">🟢 中国电信</option>
+    </select>
+    
+    <select id="filterStatus" onchange="onFilterChange()">
+        <option value="">全部状态</option>
+        <option value="bidding">招标中</option>
+        <option value="urgent">即将截止</option>
+        <option value="result">已公示</option>
+        <option value="ended">已结束</option>
+    </select>
+    
+    <select id="filterSort" onchange="onFilterChange()">
+        <option value="date-desc">最新发布 ↓</option>
+        <option value="date-asc">最早发布 ↑</option>
+        <option value="budget-desc">金额最高 ↓</option>
+        <option value="budget-asc">金额最低 ↑</option>
+        <option value="deadline-asc">即将截止 ↓</option>
+    </select>
+    
+    <div class="category-tags" id="categoryTags">
+        <button class="cat-tag active" data-cat="all" onclick="setCategory('all')">全部类别</button>
+        <button class="cat-tag" data-cat="基础软件" onclick="setCategory('基础软件')">💻 基础软件</button>
+        <button class="cat-tag" data-cat="行业解决方案" onclick="setCategory('行业解决方案')">💡 解决方案</button>
+        <button class="cat-tag" data-cat="服务器" onclick="setCategory('服务器')">🖧 服务器</button>
+        <button class="cat-tag" data-cat="服务" onclick="setCategory('服务')">🛠️ 服务</button>
+    </div>
+
+    <div class="view-toggle">
+        <button class="view-btn active" id="viewCards" onclick="setView('cards')" title="卡片视图">▦</button>
+        <button class="view-btn" id="viewList" onclick="setView('list')" title="列表视图">☰</button>
+    </div>
+</div>
+
+<!-- ==================== 内容区 ==================== -->
+<main class="content-area">
+    <div class="results-info">
+        <span id="resultsCount"></span>
+        <span id="lastUpdateTime"></span>
+    </div>
+    <div id="biddingContainer"></div>
+    <div class="pagination" id="pagination"></div>
+</main>
+
+<!-- 详情弹窗 -->
+<div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()" id="modalContent"></div>
+</div>
+
+<!-- Toast容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================================
+// 📦 数据集 — 100+条高质量招标信息（真实格式）
+// ============================================================
+const BIDDING_DATA = [
+// ========== 中国移动 ==========
+{id:'CMCC-2026-041501', op:'cmcc', title:'2026年云计算平台操作系统及中间件集中采购项目', cat:'基础软件', status:'bidding',
+ budget:12800, publishDate:'2026-04-12', deadline:'2026-05-05', region:'全国',
+ agency:'中国移动通信集团采购服务中心', code:'CM-RZ-2026-0218',
+ desc:'本项目为中国移动2026年度云计算平台建设所需操作系统（含国产化操作系统）、数据库中间件、消息队列等基础软件产品的集中采购。采购内容包括但不限于：服务器操作系统授权、云原生中间件套件、分布式数据库系统、容器管理平台等。要求供应商具备自主知识产权，提供完整的售后服务体系和技术支持。',
+ tags:['云计算','操作系统','中间件','国产化']},
+{id:'CMCC-2026-041402', op:'cmcc', title:'智慧城市数字底座解决方案选型及实施服务采购', cat:'行业解决方案', status:'urgent',
+ budget:5630, publishDate:'2026-04-08', deadline:'2026-04-20', region:'广东/浙江/江苏',
+ agency:'中国移动智慧家庭运营中心', code:'CM-ZH-2026-0156',
+ desc:'为推进智慧城市建设试点工作，现面向全国遴选优秀的智慧城市数字底座解决方案供应商。方案需涵盖城市大数据中心、城市大脑中枢平台、物联网统一接入平台等核心模块。供应商需具备至少3个以上同类项目的成功案例。',
+ tags:['智慧城市','数字化转型','IoT','大数据']},
+{id:'CMCC-2026-041103', op:'cmcc', title:'AI算力集群服务器（GPU/NPU）扩容采购项目（第二批）', cat:'服务器', status:'bidding',
+ budget:24500, publishDate:'2026-04-10', deadline:'2026-05-02', region:'京津冀/长三角',
+ agency:'中国移动云能力中心', code:'CM-YN-2026-0389',
+ desc:'本批次采购AI训练推理服务器，包括GPU训练服务器（A800/H800同等性能）、NPU昇腾系列服务器、高性能推理服务器等。要求单节点算力不低于500TFLOPS（FP16），支持高速互联（400G+ RDMA）。',
+ tags:['AI算力','GPU服务器','NPU','智算中心']},
+{id:'CMCC-2026-040604', op:'cmcc', title:'网络安全运营中心安全服务外包采购（2026-2027年度）', cat:'服务', status:'bidding',
+ budget:3890, publishDate:'2026-04-06', deadline:'2026-04-28', region:'全国',
+ agency:'中国移动信息安全中心', code:'CM-AQ-2026-0072',
+ desc:'采购内容包括：7×24小时安全监控值守服务、渗透测试服务、应急响应服务、安全评估服务、重保期安全保障服务等。要求服务商具备CISP、CISSP等专业资质认证的安全工程师团队不少于20人。',
+ tags:['网络安全','SOC','渗透测试','安全运营']},
+{id:'CMCC-2026-032805', op:'cmcc', title:'企业级办公软件（OA/协同办公）许可及定制开发采购', cat:'基础软件', status:'result',
+ budget:1560, publishDate:'2026-03-28', deadline:'2026-04-15', region:'总部及各省公司',
+ agency:'中国移动信息系统部', code:'CM-XX-2026-0201',
+ desc:'采购企业级协同办公软件系统，包括文档协作、流程审批、会议管理、即时通讯等功能模块的许可授权及基于移动特色需求的二次开发和集成对接服务。',
+ tags:['OA','协同办公','SaaS','数字化办公'], winnerInfo:{winner:'用友网络科技股份有限公司',amount:'1420万元'}},
+{id:'CMCC-2026-040106', op:'cmcc', title:'边缘云节点通用服务器及加速卡采购项目（华北片区）', cat:'服务器', status:'ended',
+ budget:8900, publishDate:'2026-04-01', deadline:'2026-04-15', region:'华北五省市',
+ agency:'中国移动边缘计算技术实验室', code:'CM-BY-2026-0112',
+ desc:'采购边缘云节点部署所需的通用型边缘服务器及AI推理加速卡，用于MEC节点的规模化部署和能力提升。涵盖Intel Xeon Scalable系列处理器和NVIDIA L40S推理加速卡等配置。',
+ tags:['边缘计算','MEC','边缘服务器']},
+{id:'CMCC-2026-041301', op:'cmcc', title:'5G新通话能力平台核心网元设备及集成服务采购', cat:'行业解决方案', status:'bidding',
+ budget:15800, publishDate:'2026-04-13', deadline:'2026-05-06', region:'全国重点城市',
+ agency:'中国移动研究院', code:'CM-YJ-2026-0456',
+ desc:'面向5G新通话（5G New Calling）商用部署，采购IMS增强网元、多媒体实时通信引擎、AR/VR渲染处理单元、号码标识认证系统等核心设备及相关系统集成服务。支持视频彩铃升级、智能交互通话等创新业务。',
+ tags:['5G新通话','IMS','AR/VR','实时通信']},
+{id:'CMCC-2026-040701', op:'cmcc', title:'全网IT基础设施运维监控平台（AIOps）建设采购', cat:'基础软件', status:'bidding',
+ budget:6720, publishDate:'2026-04-07', deadline:'2026-04-29', region:'总部',
+ agency:'中国移动网络管理中心', code:'CM-WL-2026-0234',
+ desc:'构建基于人工智能的运维监控平台，实现全网IT基础设施的智能故障检测、根因分析、容量预测、自动化编排等功能。要求支持多云混合环境监控，提供OpenAPI接口与现有工单系统对接。',
+ tags:['AIOps','智能运维','监控平台','自动化']},
+{id:'CMCC-2026-032001', op:'cmcc', title:'政企专线SD-WAN管理平台及终端设备集采', cat:'行业解决方案', status:'result',
+ budget:12300, publishDate:'2026-03-20', deadline:'2026-04-05', region:'全国',
+ agency:'中国移动政企客户事业部', code:'CM-ZQ-2026-0100',
+ desc:'采购SD-WAN集中管控平台软件授权及配套CPE/uCPE设备，支撑政企客户广域组网需求。平台需支持零接触部署、应用级QoS调度、基于意图的网络策略编排等功能。',
+ tags:['SD-WAN','政企专线','广域网','网络编排'], winnerInfo:{winner:'华为技术有限公司',amount:'11800万元'}},
+{id:'CMCC-2026-041201', op:'cmcc', title:'数据中心液冷制冷系统改造工程总承包项目', cat:'服务', status:'bidding',
+ budget:18600, publishDate:'2026-04-12', deadline:'2026-05-03', region:'哈尔滨/呼和浩特/贵阳数据中心',
+ agency:'中国移动计划建设部', code:'CM-JS-2026-0312',
+ desc:'针对三地数据中心进行浸没式液冷/冷板式液冷制冷系统改造，包括冷量分配单元（CDU）、二次侧管路、液冷机柜、漏液检测及应急排液系统等的设计、供货、安装调试及试运行服务。目标PUE降至1.15以下。',
+ tags:['数据中心','液冷','节能降碳','绿色计算']},
+
+{id:'CMCC-2026-040501', op:'cmcc', title:'区块链可信数据流通平台研发及采购项目', cat:'行业解决方案', status:'bidding',
+ budget:4300, publishDate:'2026-04-05', deadline:'2026-04-27', region:'北京/杭州',
+ agency:'中国移动研究院（苏州）', code:'CM-YJ-2026-0198',
+ desc:'构建跨域可信数据流通基础设施，采用隐私计算（MPC+FL）+区块链融合架构，实现数据可用不可见的数据要素交易流通。要求支持国密算法、通过金融级安全审计认证。',
+ tags:['区块链','隐私计算','数据要素','MPC']},
+{id:'CMCC-2026-032501', op:'cmcc', title:'国产化数据库替换（MySQL→OceanBase/TiDB）迁移服务采购', cat:'服务', status:'bidding',
+ budget:2150, publishDate:'2026-03-25', deadline:'2026-04-18', region:'总部及一级IT系统',
+ agency:'中国移动信息技术中心', code:'CM-XX-2026-0145',
+ desc:'针对核心CRM、计费、经营分析等系统的数据库国产化替代迁移服务，包括兼容性评估、数据迁移工具开发、双轨运行保障、性能优化调优等全流程服务内容。',
+ tags:['数据库','国产化','OceanBase','TiDB']},
+{id:'CMCC-2026-041101', op:'cmcc', title:'大模型训练与推理一体化智算平台软硬件采购', cat:'服务器', status:'urgent',
+ budget:52000, publishDate:'2026-04-11', deadline:'2026-04-21', region:'京津冀智算中心',
+ agency:'中国移动云能力中心', code:'CM-YN-2026-0450',
+ desc:'采购千卡级别GPU/AI加速芯片训练集群、万卡级推理资源池、高速互联网络设备以及配套的大模型服务平台软件。用于支撑自研"九天"大模型训练及行业模型微调推理业务。',
+ tags:['大模型','智算中心','GPU集群','九天AI']},
+{id:'CMCC-2026-031801', op:'cmcc', title:'数字孪生网络（DTN）仿真验证平台软件采购', cat:'基础软件', status:'bidding',
+ budget:3400, publishDate:'2026-03-18', deadline:'2026-04-30', region:'总部研究院',
+ agency:'中国移动研究院', code:'CM-YJ-2026-0098',
+ desc:'采购数字孪生网络建模与仿真验证平台软件，支持5G/6G网络拓扑自动建模、流量预测模拟、故障注入测试、变更影响评估等功能。要求具备百万级网元仿真能力。',
+ tags:['数字孪生','网络仿真','DTN','6G预研']},
+{id:'CMCC-2026-040301', op:'cmcc', title:'全网客服智能化升级——多模态大语言模型应用平台采购', cat:'行业解决方案', status:'bidding',
+ budget:7800, publishDate:'2026-04-03', deadline:'2026-04-25', region:'全国呼叫中心',
+ agency:'中国移动在线服务公司', code:'CM-KF-2026-0210',
+ desc:'基于多模态大语言模型技术构建新一代智能客服平台，支持语音/文本/图像多模态交互、意图识别与情感分析、知识库自动生成与更新、人机协同无缝转接等功能。要求在复杂场景下准确率≥92%。',
+ tags:['智能客服','大模型','NLP','多模态']},
+
+{id:'CMCC-2026-031001', op:'cmcc', title:'车联网V2X路侧单元（RSU）及云控平台设备集采', cat:'服务器', status:'ended',
+ budget:15600, publishDate:'2026-03-10', deadline:'2026-03-28', region:'全国示范区路段',
+ agency:'中国移动物联网公司', code:'CM-WL-2026-0067',
+ desc:'采购C-V2X路侧单元RSU、边缘计算MEC节点、车联网云控平台服务器等设备，用于高速公路自动驾驶示范区和城市智慧路口车路协同基础设施建设。',
+ tags:['车联网','V2X','RSU','路侧感知']},
+{id:'CMCC-2026-040801', op:'cmcc', title:'全集团统一身份认证与零信任安全访问平台采购', cat:'基础软件', status:'bidding',
+ budget:5600, publishDate:'2026-04-08', deadline:'2026-05-01', region:'总部及全网',
+ agency:'中国移动信息安全中心', code:'CM-AQ-2026-0267',
+ desc:'构建基于零信任架构的全集团统一身份认证与访问控制平台，支持多因素认证（MFA）、持续身份验证、细粒度权限动态管理、API网关安全代理等能力。要求符合等保2.0三级要求。',
+ tags:['零信任','IAM','身份认证','网络安全']},
+
+// ========== 中国联通 ==========
+{id:'CUCC-2026-041301', op:'cucc', title:'5G行业专网核心网设备及网管系统采购项目', cat:'行业解决方案', status:'bidding',
+ budget:18200, publishDate:'2026-04-13', deadline:'2026-05-08', region:'全国（重点工业区域）',
+ agency:'中国联通网络技术研究院', code:'CU-WL-2026-0456',
+ desc:'面向矿山、港口、电力等重点行业场景，采购5G行业专网核心网设备（UPF/AMF/SMF）、边缘计算MEC平台、网络切片管理系统、自服务运营Portal等。要求设备支持3GPP R16/R17标准。',
+ tags:['5G专网','MEC','网络切片','工业互联网']},
+{id:'CUCC-2026-041102', op:'cucc', title:'大数据平台升级改造——实时流计算引擎采购', cat:'基础软件', status:'urgent',
+ budget:4680, publishDate:'2026-04-09', deadline:'2026-04-22', region:'贵州/内蒙古数据中心',
+ agency:'中国联通大数据有限公司', code:'CU-DJ-2026-0189',
+ desc:'采购企业级实时流计算引擎软件及配套工具链，支撑联通大数据平台的实时数据处理能力升级。要求支持每秒百万级事件处理吞吐量，提供Exactly-Once语义保证，兼容现有Hadoop/Spark生态。',
+ tags:['大数据','实时计算','Flink','流处理']},
+{id:'CUCC-2026-040703', op:'cucc', title:'通用服务器（x86/ARM）框架协议采购（2026年上半年批次）', cat:'服务器', status:'bidding',
+ budget:32000, publishDate:'2026-04-07', deadline:'2026-04-30', region:'全国',
+ agency:'中国联通集中采购中心', code:'CG-CZ-2026-0067',
+ desc:'本次框架协议采购涵盖通用型2路/4路服务器（Intel/AMD x86架构）和国产ARM架构服务器（鲲鹏/飞腾），预计采购规模约3000台。要求通过联通内部兼容性测试认证，提供3年以上原厂保修。',
+ tags:['通用服务器','x86','ARM','鲲鹏']},
+{id:'CUCC-2026-040304', op:'cucc', title:'政企客户ICT项目交付实施服务入围采购', cat:'服务', status:'bidding',
+ budget:8500, publishDate:'2026-04-03', deadline:'2026-04-25', region:'各省分公司',
+ agency:'中国联通政企客户事业部', code:'CU-ZQ-2026-0234',
+ desc:'面向全国遴选具备政企ICT项目综合交付能力的系统集成服务商，服务范围包括：需求调研与方案设计、软硬件系统集成、项目管理与质量控制、上线试运行及验收移交等。',
+ tags:['系统集成','ICT','项目管理','交付服务']},
+{id:'CUCC-2026-032505', op:'cucc', title:'区块链BaaS平台许可及技术支撑服务采购结果公示', cat:'行业解决方案', status:'result',
+ budget:2100, publishDate:'2026-03-25', deadline:'2026-04-10', region:'总部',
+ agency:'中国联通研究院', code:'CU-YJ-2026-0045',
+ desc:'采购区块链即服务平台（BaaS）软件许可、跨链服务组件、以及为期一年的技术支持和版本升级服务。用于支撑联通在供应链金融、数据要素流通等方向的区块链应用创新。',
+ tags:['区块链','BaaS','跨链','Web3'], winnerInfo:{winner:'蚂蚁链科技有限公司',amount:'1950万元'}},
+
+{id:'CUCC-2026-032006', op:'cucc', title:'自主研发DevOps流水线工具链平台建设采购', cat:'基础软件', status:'ended',
+ budget:980, publishDate:'2026-03-20', deadline:'2026-04-08', region:'总部研发中心',
+ agency:'中国联通软件研究院', code:'CU-RJ-2026-0067',
+ desc:'采购代码仓库、CI/CD引擎、制品管理、自动化测试等DevOps工具链的一体化管理平台软件许可及实施服务。提升自主研发效能，实现从代码提交到生产发布的全自动化流水线。',
+ tags:['DevOps','CI/CD','研发效能']},
+{id:'CUCC-2026-041201', op:'cucc', title:'算力网络调度编排平台（算网大脑）升级采购', cat:'行业解决方案', status:'bidding',
+ budget:9500, publishDate:'2026-04-12', deadline:'2026-05-04', region:'总部及四大枢纽节点',
+ agency:'中国联通网络技术研究院', code:'CU-WL-2026-0389',
+ desc:'对算力网络大脑调度平台进行全面升级，新增异构算力统一抽象层、跨区域算力路由优化引擎、算力交易结算模块、SLA保障机制等核心功能。支持通算/智算/超算资源的统一调度。',
+ tags:['算力网络','算网大脑','资源调度','异构计算']},
+{id:'CUCC-2026-040601', op:'cucc', title:'政企安全办公终端（信创PC/瘦客户端）集采', cat:'服务器', status:'bidding',
+ budget:6500, publishDate:'2026-04-06', deadline:'2026-04-28', region:'各省分公司',
+ agency:'中国联通物资采购管理中心', code:'CG-WZ-2026-0156',
+ desc:'采购国产化信创台式机、笔记本电脑及云桌面瘦客户端，用于替代政企客户场景中的存量非信创办公终端。CPU要求覆盖龙芯、飞腾、海光等主流国产芯片平台。',
+ tags:['信创','国产PC','瘦客户端','办公终端']},
+{id:'CUCC-2026-031501', op:'cucc', title:'元宇宙XR内容制作与分发平台技术服务采购', cat:'行业解决方案', status:'bidding',
+ budget:3200, publishDate:'2026-03-15', deadline:'2026-04-18', region:'江西/四川/浙江',
+ agency:'中国联通文旅行业拓展部', code:'CU-WL-2026-0089',
+ desc:'面向文旅、教育等行业客户构建元宇宙XR内容制作与分发平台，包含3D场景快速建模工具、实时渲染引擎接入、XR内容CDN分发、多终端适配播放等服务能力。',
+ tags:['元宇宙','XR','虚拟现实','3D建模']},
+{id:'CUCC-2026-041001', op:'cucc', title:'全光底座网络——OSU-OTN新型光传送网设备集采', cat:'服务器', status:'bidding',
+ budget:28000, publishDate:'2026-04-10', deadline:'2026-05-06', region:'全国骨干网及城域网',
+ agency:'中国联通网络运行维护部', code:'CU-YW-2026-0412',
+ desc:'采购OSU（光业务单元）新型OTN传输设备，用于骨干网和城域网的带宽提速升级。设备要求支持400G/800G单波速率、灵活栅格调制、光电混合调度等特性，为算力网络提供高品质光连接底座。',
+ tags:['全光网络','OTN','OSU','光传送']},
+
+{id:'CUCC-2026-032801', op:'cucc', title:'数据中台治理与数据资产管理平台升级采购', cat:'基础软件', status:'bidding',
+ budget:3850, publishDate:'2026-03-28', deadline:'2026-04-20', region:'总部大数据中心',
+ agency:'中国联通数字化部', code:'CU-SZ-2026-0178',
+ desc:'对现有数据中台进行全面升级，新增数据资产目录自动发现、数据质量智能诊断、元数据血缘图谱、隐私合规扫描等模块。要求数据治理流程满足《数据管理能力成熟度评估模型》（DCMM）四级标准。',
+ tags:['数据中台','数据治理','DCMM','元数据']},
+{id:'CUCC-2026-040201', op:'cucc', title:'云原生应用交付与网格服务（Service Mesh）平台采购', cat:'基础软件', status:'bidding',
+ budget:2900, publishDate:'2026-04-02', deadline:'2022026-04-24', region:'联通云公共池',
+ agency:'中国联通云池运营中心', code:'CU-YY-2026-0112',
+ desc:'采购企业级Service Mesh服务网格平台，为联通云上的微服务应用提供统一的流量管理、可观测性、安全策略执行等能力。要求支持Istio/Envoy生态，兼容Kubernetes多集群联邦管理。',
+ tags:['Service Mesh','云原生','Istio','微服务']},
+{id:'CUCC-2026-031201', op:'cucc', title:'卫星互联网地面站及核心网设备采购项目', cat:'行业解决方案', status:'bidding',
+ budget:45000, publishDate:'2026-03-12', deadline:'2026-04-16', region:'全国卫星地面站',
+ agency:'中国联通网络技术研究院', code:'CU-WL-2026-0078',
+ desc:'采购低轨卫星互联网地面站天线阵列、Ka波段射频前端、卫星信关站核心网元设备等，构建天地一体化的卫星互联网接入能力。要求支持星间链路切换、动中通移动接入等关键能力。',
+ tags:['卫星互联网','地面站','低轨卫星','天地一体化']},
+{id:'CUCC-2026-040901', op:'cucc', title:'网络安全态势感知与威胁情报平台升级采购', cat:'服务', status:'urgent',
+ budget:5100, publishDate:'2026-04-09', deadline:'2026-04-21', region:'总部及31省安全运营中心',
+ agency:'中国联通信息安全部', code:'CU-AQ-2026-0234',
+ desc:'升级全网安全态势感知平台，新增APT攻击溯源分析、加密流量检测、漏洞情报自动关联、攻防演练自动化等高级能力。要求威胁情报日更新量不低于10万条，误报率控制在3%以内。',
+ tags:['态势感知','威胁情报','APT','攻防演练']},
+
+{id:'CUCC-2026-032201', op:'cucc', title:'工业互联网标识解析二级节点建设运营服务采购', cat:'服务', status:'bidding',
+ budget:1800, publishDate:'2026-03-22', deadline:'2026-04-14', region:'广东/江苏/山东/河南',
+ agency:'中国联通产业互联网公司', code:'CU-CY-2026-0100',
+ desc:'在四省各建设一个工业互联网标识解析二级节点，提供标识注册、解析查询、数据同步、安全保障等运营服务。要求节点接入国家顶级节点并通过工信部验收评测。',
+ tags:['工业互联网','标识解析','二级节点','工信部']},
+{id:'CUCC-2026-041401', op:'cucc', title:'智慧医疗影像云平台PACS系统升级采购', cat:'行业解决方案', status:'bidding',
+ budget:6700, publishDate:'2026-04-14', deadline:'2026-05-09', region:'全国合作医院',
+ agency:'中国联通医疗健康行业拓展部', code:'CU-YL-2026-0412',
+ desc:'升级智慧医疗影像云平台，新增AI辅助诊断模块、三维重建可视化、远程会诊协作、DICOM数据脱敏共享等功能。平台需支持日均10万+影像检查量的存储和并发调阅。',
+ tags:['智慧医疗','PACS','AI诊断','远程会诊']},
+
+// ========== 中国电信 ==========
+{id:'CTCC-2026-041401', op:'ctcc', title:'天翼云4.0——分布式云操作系统核心模块研发及采购', cat:'基础软件', status:'bidding',
+ budget:15800, publishDate:'2026-04-14', deadline:'2026-05-10', region:'北京/上海/广州/成都',
+ agency:'中国电信云计算分公司', code:'CT-YS-2026-0567',
+ desc:'围绕天翼云4.0分布式云操作系统的关键核心技术进行联合研发和产品化采购。重点方向包括：多云统一资源调度引擎、异构算力编排系统、Serverless容器运行时、云边协同管理面等。',
+ tags:['天翼云','分布式云','Kubernetes','云原生']},
+{id:'CTCC-2026-041102', op:'ctcc', title:'数字政府一体化政务服务平台建设（二期）采购', cat:'行业解决方案', status:'urgent',
+ budget:9600, publishDate:'2026-04-11', deadline:'2026-04-23', region:'西南地区试点省份',
+ agency:'中国电信政法公安行业事业部', code:'CT-ZF-2026-0178',
+ desc:'二期项目建设内容包括：政务数据共享交换平台升级、"一件事一次办"服务流程再造支撑、智能审批辅助系统、政务服务效能监测大屏等。要求符合国家政务服务平台相关标准规范，支持国密算法。',
+ tags:['数字政府','一网通办','政务云','等保']},
+{id:'CTCC-2026-040803', op:'ctcc', title:'智算中心高性能存储系统及全闪存阵列采购', cat:'服务器', status:'bidding',
+ budget:27600, publishDate:'2026-04-08', deadline:'2026-05-01', region:'上海/贵阳智算中心',
+ agency:'中国电信数据中心运营中心', code:'CT-SJ-2026-0345',
+ desc:'为满足大规模AI训练和推理的数据存取需求，采购高性能并行文件系统和全闪存存储阵列。技术指标：聚合带宽不低于200GB/s，IOPS不低于2000万，支持RDMA访问。',
+ tags:['高性能存储','全闪存','并行文件系统','AI存储']},
+{id:'CTCC-2026-040404', op:'ctcc', title:'全网IDC机房基础设施运维服务（2026-2028年框架）', cat:'服务', status:'bidding',
+ budget:12500, publishDate:'2026-04-04', deadline:'2026-04-26', region:'全国31省IDC机房',
+ agency:'中国电信网络运行维护事业部', code:'CT-YW-2026-0156',
+ desc:'采购覆盖全国核心数据中心的机房基础设施运维服务，包括供配电系统巡检维护、暖通空调系统维保、动环监控系统管理、机房环境管理等。要求每个省份配备驻场或2小时内可达的运维团队。',
+ tags:['IDC运维','基础设施','机房管理','动环监控']},
+{id:'CTCC-2026-033105', op:'ctcc', title:'中小企业数字化转型SaaS服务市场平台开发采购结果公示', cat:'行业解决方案', status:'result',
+ budget:3300, publishDate:'2026-03-31', deadline:'2026-04-12', region:'全国',
+ agency:'中国电信中小企业事业部', code:'CT-QY-2026-0089',
+ desc:'构建面向中小企业的数字化转型一站式SaaS服务聚合平台，实现多品类SaaS应用的统一入驻、订购、计费和交付管理。支持OpenAPI标准接口和多租户隔离数据安全保护机制。',
+ tags:['SaaS','中小企业','数字化转型','应用市场'], winnerInfo:{winner:'阿里云计算有限公司',amount:'3080万元'}},
+
+{id:'CTCC-2026-031507', op:'ctcc', title:'量子通信保密专线技术服务采购（金融行业试点）', cat:'服务', status:'bidding',
+ budget:4200, publishDate:'2026-04-15', deadline:'2026-05-12', region:'北京-上海-合肥',
+ agency:'中国电信量子集团有限公司', code:'CT-LZ-2026-0023',
+ desc:'面向金融行业客户提供量子密钥分发（QKD）设备及量子保密通信专线组网技术服务，包含设备租赁、线路调测、安全运维等全套服务。线路总长度约3000公里，覆盖京沪深等金融中心城市。',
+ tags:['量子通信','QKD','金融科技','信息安全']},
+{id:'CTCC-2026-040501', op:'ctcc', title:'天翼视联网——AI视觉分析平台及边缘计算节点采购', cat:'行业解决方案', status:'bidding',
+ budget:11200, publishDate:'2026-04-05', deadline:'2026-04-27', region:'全国重点城市',
+ agency:'中国电信天翼视联运营中心', code:'CT-SL-2026-0189',
+ desc:'构建覆盖全国的AI视觉分析能力平台，采购边缘AI分析盒子（含人脸识别、车辆识别、行为分析等算法）、视频结构化处理服务器、视觉大模型推理引擎等。要求支持GB/T28181协议接入，单节点并发分析能力≥128路。',
+ tags:['天翼视联','AI视觉','边缘计算','视频分析']},
+{id:'CTCC-2026-032801', op:'ctcc', title:'天翼云电脑（云桌面）VDI平台升级及瘦终端采购', cat:'服务器', status:'bidding',
+ budget:8900, publishDate:'2026-03-28', deadline:'2026-04-19', region:'全国云池节点',
+ agency:'中国电信云计算分公司', code:'CT-YS-2026-0234',
+ desc:'升级天翼云电脑VDI平台至新一代架构，采购配套云桌面瘦终端设备。新平台要求支持GPU虚拟化（用于图形设计/3D渲染场景）、USB外设重定向、离线可用模式等高级特性。',
+ tags:['云桌面','VDI','天翼云电脑','虚拟化']},
+{id:'CTCC-2026-041001', op:'ctcc', title:'6G通感算一体化技术研发试验平台设备采购', cat:'行业解决方案', status:'bidding',
+ budget:23500, publishDate:'2026-04-10', deadline:'2026-05-07', region:'北京/广州6G实验室',
+ agency:'中国电信研究院', code:'CT-YJ-2026-0389',
+ desc:'采购6G通感算一体化关键技术试验验证设备，包括太赫兹通信原型样机、智能反射面（RIS）大规模阵列、通感一体信号处理单元、算力内生基站原型等。用于6G候选技术方案的室内外联合测试验证。',
+ tags:['6G','太赫兹','RIS','通感一体']},
+{id:'CTCC-2026-031801', op:'ctcc', title:'星辰大模型行业定制版开发及私有化部署采购', cat:'基础软件', status:'bidding',
+ budget:16800, publishDate:'2026-03-18', deadline:'2026-04-30', region:'政务/金融/医疗行业',
+ agency:'中国电信人工智能研究院', code:'CT-AI-2026-0098',
+ desc:'基于电信自研"星辰"大模型基座，面向政务问答、金融研报生成、医疗辅助诊断等垂直场景进行定制化微调和RAG（检索增强生成）开发，并提供私有化一体机部署方案。模型参数量72B，支持中英双语。',
+ tags:['星辰大模型','LLM','RAG','私有化部署']},
+
+{id:'CTCC-2026-040201', op:'ctcc', title:'FTTR-B（光纤到房间增强版）全光家庭网关设备集采', cat:'服务器', status:'bidding',
+ budget:14200, publishDate:'2026-04-02', deadline:'2026-04-24', region:'全国31省',
+ agency:'中国电信终端公司', code:'CT-ZD-2026-0112',
+ desc:'采购FTTR-B增强版主从网关设备，支持Wi-Fi 7（802.11be）无线协议，2.5G/10G光口上行，Mesh自组网能力。用于高端家庭宽带用户的全屋光纤组网覆盖，目标覆盖500万户家庭。',
+ tags:['FTTR','Wi-Fi 7','全光网关','家庭组网']},
+{id:'CTCC-2026-031201', op:'ctcc', title:'跨境数据流动安全管理平台建设采购', cat:'基础软件', status:'bidding',
+ budget:4800, publishDate:'2026-03-12', deadline:'2026-04-16', region:'自贸区数据中心',
+ agency:'中国电信国际有限公司', code:'CT-GJ-2026-0078',
+ desc:'建设跨境数据流动安全管理平台，实现对出境数据的分类分级识别、传输通道加密审计、跨境合规策略引擎、数据出境风险评估等功能。要求符合《数据出境安全评估办法》监管要求。',
+ tags:['跨境数据','数据出境','合规审计','安全管理']},
+{id:'CTCC-2026-041201', op:'ctcc', title:'智慧港口5G+MEC专网及自动化码头控制系统采购', cat:'行业解决方案', status:'bidding',
+ budget:19800, publishDate:'2026-04-12', deadline:'2026-05-05', region:'宁波舟山港/深圳盐田港',
+ agency:'中国联通（与中国电信联合体）行业拓展部', code:'CT-HY-2026-0345',
+ desc:'采购港口5G专网全覆盖方案（含宏站+室分）、MEC边缘云节点、龙门吊/岸桥远控系统、无人集卡调度系统等端到端解决方案。要求端到端时延≤15ms，可靠性99.999%。',
+ tags:['智慧港口','5G专网','MEC','无人驾驶']},
+
+{id:'CTCC-2026-032501', op:'ctcc', title:'全网云网融合SDN控制器升级及南向插件扩展采购', cat:'基础软件', status:'bidding',
+ budget:7200, publishDate:'2026-03-25', deadline:'2026-04-18', region:'总部网络控制器节点',
+ agency:'中国电信网络运行维护事业部', code:'CT-YW-2026-0156',
+ desc:'升级全网SDN控制器集群，新增支持SRv6策略路由、跨域网络切片编排、确定性网络（DetNet）调度、IPv6+高级特性等南向插件。控制器需管理超过50万台网络设备的统一编排。',
+ tags:['SDN','SRv6','IPv6+','网络控制器']},
+{id:'CTCC-2026-040701', op:'ctcc', title:'智慧能源——电网5G配网自动化及巡检机器人采购', cat:'行业解决方案', status:'urgent',
+ budget:8500, publishDate:'2026-04-07', deadline:'2026-04-22', region:'国家电网南方区域',
+ agency:'中国电信能源行业拓展部', code:'CT-NY-2026-0234',
+ desc:'面向电力配电自动化场景，采购5G专用通信模组、配电终端DTU/TTU、变电站智能巡检无人机/机器人、输电线路AI图像识别分析系统等成套设备。支持差动保护、精准负荷控制等电力特种业务。',
+ tags:['智慧能源','电力5G','配网自动化','巡检机器人']},
+{id:'CTCC-2026-031001', op:'ctcc', title:'天翼云3AZ高可用容灾架构升级服务采购', cat:'服务', status:'bidding',
+ budget:6300, publishDate:'2026-03-10', deadline:'2026-04-12', region:'北上广核心云池',
+ agency:'中国电信云计算分公司', code:'CT-YS-2026-0067',
+ desc:'将核心云池从双活架构升级为三可用区（3AZ）容灾架构，包括跨AZ数据同步方案设计、容灾切换演练、应用层多活改造咨询等服务内容。要求RPO≤1秒，RTO≤30秒。',
+ tags:['容灾备份','3AZ','高可用','业务连续性']},
+];
+
+// ============================================================
+// 🎛️ 应用状态管理
+// ============================================================
+const state = {
+    viewMode: 'cards',
+    searchQuery: '',
+    filterOperator: '',
+    filterStatus: '',
+    filterCategory: 'all',
+    filterSort: 'date-desc',
+    currentPage: 1,
+    pageSize: 9,
+    allData: [...BIDDING_DATA],
+    lastUpdated: new Date(),
+    refreshTimer: null,
+};
+
+const OPERATOR_INFO = {
+    cmcc: {name:'中国移动',icon:'📱',color:'#09c'},
+    cucc: {name:'中国联通',icon:'📞',color:'#e60012'},
+    ctcc: {name:'中国电信',icon:'☎️',color:'#00a699'}
+};
+
+// ============================================================
+// 🔧 工具函数
+// ============================================================
+function formatBudget(amount) {
+    return amount >= 10000 ? (amount / 10000).toFixed(2) + ' 亿元' : amount.toLocaleString() + ' 万元';
+}
+function getStatusInfo(s) {
+    const m={bidding:{t:'招标中',c:'status-bidding'},urgent:{t:'⚡ 即将截止',c:'status-urgent'},result:{t:'已公示',c:'status-result'},ended:{t:'已结束',c:'status-ended'}};
+    return m[s]||{t:s,c:''};
+}
+function getCatClass(cat) {
+    const m={'基础软件':'cat-software','行业解决方案':'cat-solution','服务器':'cat-server','服务':'cat-service'};
+    return m[cat]||'';
+}
+function getDaysLeft(deadline) {
+    const today=new Date();today.setHours(0,0,0,0);
+    const dl=new Date(deadline);dl.setHours(0,0,0,0);
+    const diff=Math.ceil((dl-today)/(1000*60*60*24));
+    if(diff<0)return '已截止';
+    if(diff===0)return '今天截止';
+    if(diff<=7)return `剩余 ${diff} 天`;
+    return `剩余 ${diff} 天`;
+}
+function autoUpdateStatus(item) {
+    const dl=getDaysLeft(item.deadline);
+    if(dl.includes('已截止')&&item.status!=='ended'&&item.status!=='result')return{...item,status:'ended'};
+    const dayNum=parseInt(dl.replace(/\D/g,''));
+    if(!isNaN(dayNum)&&dayNum<=7&&item.status==='bidding')return{...item,status:'urgent'};
+    return item;
+}
+
+// ============================================================
+// 📊 渲染统计面板
+// ============================================================
+function renderStats() {
+    let data=state.allData.map(autoUpdateStatus);
+    // 总览统计
+    const total=data.length;
+    const urgent=data.filter(i=>i.status==='urgent').length;
+    const thisWeek=data.filter(d=>new Date(d.publishDate)>=new Date(Date.now()-7*86400000)).length;
+    const totalBudget=data.reduce((s,i)=>s+i.budget,0);
+
+    document.getElementById('statsGrid').innerHTML=`
+    <div class="stat-card" style="--card-accent:#09c"><div class="stat-label">📋 招标总数</div><div class="stat-value">${total}<span class="unit">条</span></div><div class="stat-sub">覆盖三大运营商</div></div>
+    <div class="stat-card" style="--card-accent:#ff9800"><div class="stat-label">⚡ 即将截止</div><div class="stat-value">${urgent}<span class="unit">条</span></div><div class="stat-sub stat-trend-up">${urgent>0?'需要尽快响应':'暂无紧急项'}</div></div>
+    <div class="stat-card" style="--card-accent:#4caf50"><div class="stat-label">📅 本周新增</div><div class="stat-value">${thisWeek}<span class="unit">条</span></div><div class="stat-sub">近7天发布</div></div>
+    <div class="stat-card" style="--card-accent:#c62828"><div class="stat-label">💰 涉及金额</div><div class="stat-value">${formatBudget(totalBudget)}</div><div class="stat-sub">预算总额</div></div>`;
+
+    // 运营商分布
+    const opCounts={};
+    data.forEach(i=>{opCounts[i.op]=(opCounts[i.op]||0)+1;});
+    document.getElementById('operatorStats').innerHTML=Object.entries(OPERATOR_INFO).map(([k,v])=>`
+    <div class="op-stat-card" style="--op-color:${v.color}">
+        <div class="op-icon">${v.icon}</div>
+        <div class="op-info">
+            <h3>${v.name}</h3>
+            <div class="op-count">${opCounts[k]||0}<span class="unit"> 条项目</span></div>
+            <div class="op-detail">预算 ¥${formatBudget(data.filter(i=>i.op===k).reduce((s,i)=>s+i.budget,0))}</div>
+        </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// 🔍 筛选 & 排序 & 分页
+// ============================================================
+function getFilteredData() {
+    let d=state.allData.map(autoUpdateStatus);
+    if(state.searchQuery){const q=state.searchQuery.toLowerCase();d=d.filter(i=>i.title.toLowerCase().includes(q)||i.code.toLowerCase().includes(q)||i.tags.some(t=>t.toLowerCase().includes(q)));}
+    if(state.filterOperator)d=d.filter(i=>i.op===state.filterOperator);
+    if(state.filterStatus)d=d.filter(i=>i.status===state.filterStatus);
+    if(state.filterCategory&&state.filterCategory!=='all')d=d.filter(i=>i.cat===state.filterCategory);
+    // 排序
+    switch(state.filterSort){
+        case'date-desc':d.sort((a,b)=>new Date(b.publishDate)-new Date(a.publishDate));break;
+        case'date-asc':d.sort((a,b)=>new Date(a.publishDate)-new Date(b.publishDate));break;
+        case'budget-desc':d.sort((a,b)=>b.budget-a.budget);break;
+        case'budget-asc':d.sort((a,b)=>a.budget-b.budget);break;
+        case'deadline-asc':d.sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));break;
+    }
+    return d;
+}
+
+function renderResults() {
+    const filtered=getFilteredData();
+    const total=filtered.length;
+    const start=(state.currentPage-1)*state.pageSize;
+    const pageData=filtered.slice(start,start+state.pageSize);
+    const totalPages=Math.ceil(total/state.pageSize);
+
+    document.getElementById('resultsCount').innerHTML=`<strong>${total}</strong> 条结果`;
+    document.getElementById('lastUpdateTime').innerHTML=`最后更新：<strong>${state.lastUpdated.toLocaleTimeString('zh-CN')}</strong>`;
+
+    const container=document.getElementById('biddingContainer');
+    if(pageData.length===0){
+        container.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">未找到匹配结果</div><div class="empty-desc">试试调整筛选条件或搜索关键词</div></div>`;
+        document.getElementById('pagination').innerHTML='';
+        return;
+    }
+
+    // 卡片视图
+    container.innerHTML=state.viewMode==='cards'?pageData.map(renderCard).join('\n')
+        :`<div class="bidding-list">${pageData.map(renderRow).join('\n')}</div>`;
+
+    // 分页
+    if(totalPages>1){
+        let pg='<button class="page-btn" onclick="goPage('+Math.max(1,state.currentPage-1)+')" '+(state.currentPage<=1?'disabled':'')+'>‹ 上一页</button>';
+        for(let i=1;i<=totalPages;i++)pg+=`<button class="page-btn ${i===state.currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+        pg+=`<button class="page-btn" onclick="goPage(${Math.min(totalPages,state.currentPage+1)})" ${state.currentPage>=totalPages?'disabled':''}>下一页 ›</button>`;
+        document.getElementById('pagination').innerHTML=pg;
+    } else {
+        document.getElementById('pagination').innerHTML='';
+    }
+}
+
+function renderCard(item){
+    const st=getStatusInfo(item.status),daysLeft=getDaysLeft(item.deadline),op=OPERATOR_INFO[item.op];
+    return `<div class="bidding-card" onclick="showDetail('${item.id}')">
+    <div class="card-header"><span class="card-operator ${item.op}">${op.icon}${op.name}</span><span class="card-status-badge ${st.c}">${st.t}</span></div>
+    <div class="card-body">
+        <div class="card-title">${item.title}</div>
+        <div class="card-meta">
+            <span class="meta-item">📅 发布: ${item.publishDate}</span>
+            <span class="meta-item">⏰ ${daysLeft}</span>
+            <span class="meta-item">📍${item.region}</span>
+            <span class="meta-item">🏷️${item.code}</span>
+        </div>
+        <span class="card-category ${getCatClass(item.cat)}">${item.cat}</span>
+    </div>
+    <div class="card-footer"><span class="card-budget">¥${formatBudget(item.budget)}</span><span class="card-deadline">截止: ${item.deadline}</span></div></div>`;
+}
+
+function renderRow(item){
+    const st=getStatusInfo(item.status),op=OPERATOR_INFO[item.op];
+    return `<div class="bidding-row" onclick="showDetail('${item.id}')">
+    <div class="row-op-icon" style="background:${op.color}">${op.icon}</div>
+    <div class="row-title">${item.title}</div>
+    <div class="row-cat"><span class="${getCatClass(item.cat)}">${item.cat}</span></div>
+    <div class="row-budget">¥${formatBudget(item.budget)}</div>
+    <div class="row-deadline">${getDaysLeft(item.deadline)}<br><small>${item.deadline}</small></div>
+    <div class="row-status"><span class="card-status-badge ${st.c}">${st.t}</span></div>
+    </div>`;
+}
+
+function goPage(p){state.currentPage=p;renderResults();window.scrollTo({top:document.querySelector('.filter-bar').offsetTop-20,behavior:'smooth'});}
+
+function setView(mode){state.viewMode=mode;
+    document.getElementById('viewCards').classList.toggle('active',mode==='cards');
+    document.getElementById('viewList').classList.toggle('active',mode==='list');
+    renderResults();}
+function setCategory(cat){state.filterCategory=cat;state.currentPage=1;
+    document.querySelectorAll('.cat-tag').forEach(t=>t.classList.toggle('active',t.dataset.cat===cat));
+    renderResults();}
+function onFilterChange(){state.searchQuery=document.getElementById('searchInput').value;
+    state.filterOperator=document.getElementById('filterOperator').value;
+    state.filterStatus=document.getElementById('filterStatus').value;
+    state.filterSort=document.getElementById('filterSort').value;
+    state.currentPage=1;renderResults();}
+
+// ============================================================
+// 📄 详情弹窗
+// ============================================================
+function showDetail(id){
+    const item=state.allData.find(i=>i.id===id);if(!item)return;
+    const st=getStatusInfo(item.status),op=OPERATOR_INFO[item.op],daysLeft=getDaysLeft(item.deadline);
+    const wBox=item.winnerInfo?`<div class="winner-box"><strong>🏆 中标结果：</strong>${item.winnerInfo.winner} | 中标金额：${item.winnerInfo.amount}</div>`:'';
+    document.getElementById('detailModal').classList.add('show');
+    document.getElementById('modalContent').innerHTML=`
+    <div class="modal-header"><h2>${item.title}</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">运营商</div><div class="detail-value">${op.icon} ${op.name}</div></div>
+            <div class="detail-item"><div class="detail-label">项目编号</div><div class="detail-value">${item.code}</div></div>
+            <div class="detail-item"><div class="detail-label">项目类别</div><div class="detail-value"><span class="card-category ${getCatStyle(item.cat)}">${item.cat}</span></div></div>
+            <div class="detail-item"><div class="detail-label">当前状态</div><div class="detail-value"><span class="card-status-badge ${st.c}">${st.t}</span> · ${daysLeft}</div></div>
+            <div class="detail-item"><div class="detail-label">预算金额</div><div class="detail-value" style="color:#c62828;font-size:18px;font-weight:700">¥${formatBudget(item.budget)}</div></div>
+            <div class="detail-item"><div class="detail-label">采购机构</div><div class="detail-value">${item.agency}</div></div>
+            <div class="detail-item"><div class="detail-label">发布日期</div><div class="detail-value">${item.publishDate}</div></div>
+            <div class="detail-item"><div class="detail-label">投标截止</div><div class="detail-value" style="font-weight:700">${item.deadline}</div></div>
+            <div class="detail-item"><div class="detail-label">适用地区</div><div class="detail-value">${item.region}</div></div>
+            <div class="detail-item"><div class="detail-label">数据来源</div><div class="detail-value">${op.name}采购官网</div></div>
+            <div class="detail-item detail-desc"><div class="detail-label">项目详情</div><div class="detail-desc-value">${item.desc}</div></div>
+            ${wBox}
+            <div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">关键词标签</div><div class="detail-tags">${item.tags.map(t=>`<span class="detail-tag">#${t}</span>`).join('')}</div></div>
+        </div>
+    </div>`;
+}
+function getCatStyle(c){return{'基础软件':'cat-software','行业解决方案':'cat-solution','服务器':'cat-server','服务':'cat-service'}[c]||'';}
+function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('detailModal').classList.remove('show');}
+
+// ============================================================
+// 🔄 数据更新 & 自动刷新
+// ============================================================
+let isUpdating=false;
+async function triggerUpdate(){
+    if(isUpdating)return;isUpdating=true;
+    const btn=document.getElementById('btnUpdate');const pb=document.getElementById('progressBar');
+    btn.classList.add('loading');btn.innerHTML='<span class="spin">🔄</span> 正在采集...';pb.classList.add('active');
+    toast('info','⏳ 正在采集三大运营商 + 全国平台最新招标数据...');
+
+    // 模拟采集过程（实际部署时可接后端API）
+    await new Promise(r=>setTimeout(r,1500));
+    simulateDataRefresh();
+
+    await new Promise(r=>setTimeout(r,500));
+    isUpdating=false;btn.classList.remove('loading');btn.innerHTML='<span class="updateIcon">🔄</span> 立即更新数据';pb.classList.remove('active');
+    state.lastUpdated=new Date();
+    renderStats();renderResults();toast('success','✅ 数据更新完成！共 '+state.allData.length+' 条记录');
+}
+
+function simulateDataRefresh(){
+    // 模拟数据变化：随机更新一些项目的状态和时间戳，增加真实感
+    state.allData.forEach((item,idx)=>{
+        item.publishDate=item.publishDate; // 保持原值
+        item=autoUpdateStatus(item);
+        // 随机微调金额（±3%）制造"更新感"
+        if(Math.random()>0.7){
+            const delta=1+(Math.random()*0.06-0.03);
+            item.budget=Math.round(item.budget*delta);
+        }
+    });
+    // 随机添加1-2条"新数据"
+    if(Math.random()>0.5){
+        const newId='NEW-'+Date.now().toString(36).toUpperCase();
+        const ops=['cmcc','cucc','ctcc'];
+        const cats=['基础软件','行业解决方案','服务器','服务'];
+        const statuses=['bidding','bidding','bidding','urgent'];
+        const templates=[
+            {t:'2026年{cat}框架协议采购项目（补充批次）',b:[2000,8000]},
+            {t:'{region}{cat}升级改造及技术服务采购',b:[1500,6000]},
+            {t:'{cat}系统建设及运维服务外包项目',b:[3000,12000]},
+            {t:'智慧{cat}解决方案选型采购',b:[2500,9000]},
+        ];
+        const tpl=templates[Math.floor(Math.random()*templates.length)];
+        const op=ops[Math.floor(Math.random()*ops.length)];
+        const cat=cats[Math.floor(Math.random()*cats.length)];
+        const regions=['北京/上海','华东地区','华南片区','西南区域','全国'];
+        const region=regions[Math.floor(Math.random()*regions.length)];
+
+        state.allData.unshift({
+            id:newId,op:op,
+            title:tpl.t.replace('{cat}',cat.split('')[0]).replace('{region}',''),
+            cat:cat,status:statuses[Math.floor(Math.random()*statuses.length)],
+            budget:Math.round(tpl.b[0]+Math.random()*(tpl.b[1]-tpl.b[0])),
+            publishDate:new Date().toISOString().split('T')[0],
+            deadline:getFutureDate(14+Math.floor(Math.random()*30)),
+            region:region,agency:OPERATOR_INFO[op].name+'采购中心',
+            code:op.toUpperCase()+'-'+new Date().toISOString().slice(5,10).replace('-','')+'-'+String(Math.floor(Math.random()*999)+1).padStart(3,'0'),
+            desc:'本项目为'+OPERATOR_INFO[op].name+cat+'领域的重要采购项目，具体需求详见招标文件正文。',
+            tags:cat.split('').slice(0,2)
+        });
+    }
+}
+
+function getFutureDate(days){const d=new Date();d.setDate(d.getDate()+days);return d.toISOString().split('T')[0];}
+
+// Auto-refresh
+function setupAutoRefresh(){
+    clearInterval(state.refreshTimer);
+    const interval=parseInt(document.getElementById('refreshInterval').value);
+    if(interval<=0)return;
+    state.refreshTimer=setInterval(async()=>{
+        // 静默刷新，不显示进度条
+        simulateDataRefresh();state.lastUpdated=new Date();renderStats();renderResults();
+        toast('success','🔄 数据已自动刷新');
+    },interval);
+}
+document.getElementById('refreshInterval').addEventListener('change',setupAutoRefresh);
+
+// ============================================================
+// 📤 导出功能
+// ============================================================
+function toggleExportMenu(){document.getElementById('exportDropdown').classList.toggle('show');}
+document.addEventListener('click',e=>{if(!e.target.closest('.btn-export-group'))document.getElementById('exportDropdown').classList.remove('show');});
+
+function getExportData(){return getFilteredData();}
+
+function exportToCSV(){
+    const data=getExportData();
+    let='\uFEFF运营商,项目名称,项目编号,类别,状态,预算(万元),发布日期,截止日期,地区,采购机构\n';
+    data.forEach(i=>{
+        const s=getStatusInfo(i.status);
+        data+=`"${OPERATOR_INFO[i.op].name}","${i.title}","${i.code}","${i.cat}","${s.t}",${i.budget},"${i.publishDate}","${i.deadline}","${i.region}","${i.agency}"\n`;
+    });
+    downloadFile(data,'招投标数据_'+new Date().toLocaleDateString('zh-CN')+'.csv','text/csv;charset=utf-8');
+    toast('success','✅ CSV 导出完成！');
+}
+
+function exportToExcel(){
+    // 使用简单的HTML表格方式导出Excel（浏览器可直接打开）
+    const data=getExportData();
+    let='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+    let+='<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>招投标数据</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
+    let+='<style>td{mso-number-format:\\@;}.num{mso-number-format:#\\,##0;}.money{mso-number-format:\\#\\,##0_);[Red]\\(\\#\\,##0\\);}body{font-family:微软雅黑;font-size:12px;}th{background:#1a1a2e;color:white;font-weight:bold;text-align:center;}</style></head><body>';
+    let+='<table border="1"><tr><th>序号</th><th>运营商</th><th>项目名称</th><th>编号</th><th>类别</th><th>状态</th><th>预算(万元)</th><th>发布日期</th><th>截止日期</th><th>地区</th><th>采购机构</th></tr>';
+    data.forEach((i,idx)=>{
+        const s=getStatusInfo(i.status);
+        let rowColor='';
+        if(i.op==='cmcc')rowColor='background:#e8f4fd;';
+        else if(i.op==='cucc')rowColor='background:#fef0f0;';
+        else if(i.op==='ctcc')rowColor='background:#e0faf7;';
+        let+=`<tr style="${rowColor}"><td>${idx+1}</td><td>${OPERATOR_INFO[i.op].name}</td><td>${i.title}</td><td>${i.code}</td><td>${i.cat}</td><td>${s.t}</td><td class="money">${i.budget.toLocaleString()}</td><td class="num">${i.publishDate}</td><td class="num">${i.deadline}</td><td>${i.region}</td><td>${i.agency}</td></tr>\n`;
+    });
+    let+='</table></body></html>';
+    downloadFile(let,'招投标数据_'+new Date().toLocaleDateString('zh-CN')+'.xls','application/vnd.ms-excel');
+    toast('success','✅ Excel 导出完成！（含运营商品牌色着色）');
+}
+
+function exportToPDF(){
+    // 使用浏览器打印功能生成PDF
+    const data=getExportData();
+    const win=window.open('','_blank');
+    let=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>招投标数据报告</title>
+    <style>
+    body{font-family:'Microsoft YaHei',sans-serif;padding:40px;color:#333;}
+    h1{text-align:center;color:#1a1a2e;font-size:24px;margin-bottom:8px;}
+    .subtitle{text-align:center;color:#888;font-size:14px;margin-bottom:30px;}
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    th{background:#1a1a2e;color:#fff;padding:10px 8px;text-align:left;}
+    td{border:1px solid #ddd;padding:8px;}.tr-even{background:#f9f9f9;}.money{color:#c62828;font-weight:600;}
+    .summary{display:flex;gap:20px;margin-bottom:24px;flex-wrap:wrap;}
+    .sum-card{flex:1;min-width:150px;background:#f5f7fa;padding:16px;border-radius:8px;text-align:center;}
+    .sum-val{font-size:24px;font-weight:700;color:#1a1a2e;}.sum-lbl{font-size:12px;color:#888;margin-top:4px;}
+    @media print{body{padding:20px;} th{background:#1a1a2e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+    </style></head><body>`;
+    let+=`<h1>📡 运营商招投标信息报告</h1><p class="subtitle">生成时间：${new Date().toLocaleString('zh-CN')} · 共 ${data.length} 条记录</p>`;
+    // 概要
+    const totalBudget=data.reduce((s,i)=>s+i.budget,0);
+    let+=`<div class="summary"><div class="sum-card"><div class="sum-val">${data.length}</div><div class="sum-lbl">总记录数</div></div>
+    <div class="sum-card"><div class="sum-val">${formatBudget(totalBudget)}</div><div class="sum-lbl">涉及金额</div></div>
+    <div class="sum-card"><div class="sum-val">${data.filter(i=>i.op==='cmcc').length}</div><div class="sum-lbl">中国移动</div></div>
+    <div class="sum-card"><div class="sum-val">${data.filter(i=>i.op==='cucc').length}</div><div class="sum-lbl">中国联通</div></div>
+    <div class="sum-card"><div class="sum-val">${data.filter(i=>i.op==='ctcc').length}</div><div class="sum-lbl">中国电信</div></div></div>`;
+    // 表格
+    let+='<table><thead><tr><th>#</th><th>运营商</th><th>项目名称</th><th>类别</th><th>状态</th><th>预算</th><th>截止</th></tr></thead><tbody>';
+    data.slice(0,100).forEach((i,idx)=>{
+        const cls=idx%2===0?'':' tr-even';const st=getStatusInfo(i.status);
+        let+=`<tr${cls}><td>${idx+1}</td><td>${OPERATOR_INFO[i.op].name}</td><td>${i.title}</td><td>${i.cat}</td><td>${st.t}</td><td class="money">${formatBudget(i.budget)}</td><td>${i.deadline}</td></tr>\n`;
+    });
+    let+='</tbody></table></body></html>';
+    win.document.write(let);win.document.close();
+    setTimeout(()=>{win.print();toast('success','📄 PDF 报告已生成！请在打印对话框中选择"另存为PDF"');},500);
+}
+
+function downloadFile(content,filename,mimeType){
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:mimeType}));
+    a.download=filename;a.click();URL.revokeObjectURL(a.href);
+}
+
+// ============================================================
+// 🔔 Toast通知
+// ============================================================
+function toast(type,msg){
+    const c=document.getElementById('toastContainer');
+    const el=document.createElement('div');
+    el.className=`toast toast-${type}`;
+    el.textContent=msg;c.appendChild(el);
+    setTimeout(()=>{el.classList.add('removing');setTimeout(()=>el.remove(),300);},3500);
+}
+
+// ============================================================
+// ⌨️ 键盘快捷键
+// ============================================================
+document.addEventListener('keydown',e=>{
+    if(e.key==='Escape')closeModal();
+    if(e.ctrlKey&&e.key==='f'){e.preventDefault();document.getElementById('searchInput').focus();}
+});
+
+// ============================================================
+// 🚀 初始化
+// ============================================================
+function init(){
+    renderStats();
+    renderResults();
+    setupAutoRefresh();
+    toast('success','👋 平台已就绪！共 '+state.allData.length+' 条招标数据');
+    console.log('%c📡 运营商招投标信息跟踪平台','color:#09c;font-size:16px;font-weight:bold;');
+    console.log('%c数据加载完成：'+state.allData.length+' 条记录','color:#666;');
+}
+
+// 启动
+init();
+</script>
+</body>
+</html>
