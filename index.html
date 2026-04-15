@@ -428,6 +428,47 @@
 //      - 免费额度: 5000次/天
 //   🔗 ggzy.gov.cn: https://data.ggzy.gov.cn/  （全国公共资源交易数据）
 // ============================================================
+// v4.0: API动态数据配置
+// ============================================================
+const API_CONFIG = {
+    enabled: true,
+    baseUrl: (location.hostname==='localhost'||location.hostname==='127.0.0.1')
+        ? 'http://localhost:8765' : '',
+    endpoints: { bidding:'/api/bidding', stats:'/api/stats', crawl:'/api/crawl', sources:'/api/sources' }
+};
+const DataLoader = {
+    async loadStats(){
+        if(!API_CONFIG.enabled)return null;
+        try{const r=await fetch(API_CONFIG.baseUrl+API_CONFIG.endpoints.stats,{signal:AbortSignal.timeout(5000)});const j=await r.json();return j?.data||null}
+        catch(e){console.warn('[API]统计失败:',e.message);return null}
+    },
+    async loadBidding(p={}){
+        if(!API_CONFIG.enabled)return null;
+        try{
+            const qs=new URLSearchParams({limit:p.limit||200,sort_by:'publish_time',order:'desc',...p}).toString();
+            const r=await fetch(API_CONFIG.baseUrl+API_CONFIG.endpoints.bidding+'?'+qs,{signal:AbortSignal.timeout(10000)});
+            const j=await r.json();
+            return(j?.data?.items||[]).map(i=>({
+                id:i.id||i.project_code||('api-'+Math.random().toString(36).substr(2,9)),
+                op:i.operator||'other',title:i.title||'',code:i.project_code||i.code||'',
+                budget:i.budget||0,cat:i.category||i.cat||'服务',
+                status:{bidding:'bidding',upcoming:'upcoming',closing_soon:'urgent',result_published:'ended',ended:'ended'}[i.status]||'bidding',
+                publishDate:i.publish_time||i.publishDate||i.date||'',deadline:i.deadline||'',
+                region:i.region||'',agency:i.purchaser||i.agency||'',
+                sourceName:{yifangbao:'乙方宝',xunbiaobao:'百度寻标宝'}[i.source]||i.source||i.sourceName||'API',
+                url:i.url||'#',desc:i.summary||i.desc||i.title||'',
+                tags:i.ai_tags||i.tags||[],score:i.ai_relevance_score||0
+            }))
+        }catch(e){console.warn('[API]列表失败:',e.message);return null}
+    },
+    async triggerCrawl(){
+        try{return await(await fetch(API_CONFIG.baseUrl+API_CONFIG.endpoints.crawl,{method:'POST',signal:AbortSignal.timeout(5000)})).json()}
+        catch(e){return{error:e.message}}
+    },
+    isAvailable(){return API_CONFIG.enabled&&!!API_CONFIG.baseUrl}
+};
+
+// ============================================================
 // 📊 数据来源说明（v4.0 — 2026-04-15 全面刷新）
 // ============================================================
 //
@@ -1158,16 +1199,17 @@ async function loadFromAPI(silent=false){
                 op:d.op||'other',
                 title:d.title||'',code:d.code||'',
                 budget:Number(d.budget)||0,
-                category:d.category||'other',
+                cat:d.cat||d.category||'服务',
                 status:d.status||'bidding',
-                date:d.date||new Date().toISOString().substring(0,10),
+                publishDate:d.publishDate||d.date||new Date().toISOString().substring(0,10),
                 deadline:d.deadline||'',
-                region:d.region||'',purchaser:d.purchaser||'',
-                source:d.sourceName||d.source||'',
-                url:d.url||'#',summary:d.summary||d.title||'',
-                tags:Array.isArray(d.tags)?d.tags:[],
-                score:Number(d.score)||0,
-                publishDate:d.date||new Date().toISOString().substring(0,10)
+                region:d.region||'',
+                agency:d.agency||d.purchaser||'',
+                sourceName:d.sourceName||d.source||'API',
+                url:d.url||'#',
+                desc:d.desc||d.summary||d.title||'',
+                tags:Array.isArray(d.tags)&&d.tags.length>0?d.tags:[d.cat||d.category||'其他'],
+                winnerInfo:d.winnerInfo||null
             }));
             
             if(mapped.length>0){state.allData=mapped;return true}
@@ -1245,40 +1287,38 @@ function getExportData(){return getFilteredData();}
 
 function exportToCSV(){
     const data=getExportData();
-    let='\uFEFF运营商,项目名称,项目编号,类别,状态,预算(万元),发布日期,截止日期,地区,采购机构\n';
+    let csvContent='\uFEFF运营商,项目名称,项目编号,类别,状态,预算(万元),发布日期,截止日期,地区,采购机构\n';
     data.forEach(i=>{
         const s=getStatusInfo(i.status);
-        data+=`"${OPERATOR_INFO[i.op].name}","${i.title}","${i.code}","${i.cat}","${s.t}",${i.budget},"${i.publishDate}","${i.deadline}","${i.region}","${i.agency}"\n`;
+        csvContent+=`"${OPERATOR_INFO[i.op].name}","${i.title}","${i.code}","${i.cat}","${s.t}",${i.budget},"${i.publishDate}","${i.deadline}","${i.region}","${i.agency}"\n`;
     });
-    downloadFile(data,'招投标数据_'+new Date().toLocaleDateString('zh-CN')+'.csv','text/csv;charset=utf-8');
+    downloadFile(csvContent,'招投标数据_'+new Date().toLocaleDateString('zh-CN')+'.csv','text/csv;charset=utf-8');
     toast('success','✅ CSV 导出完成！');
 }
 
 function exportToExcel(){
-    // 使用简单的HTML表格方式导出Excel（浏览器可直接打开）
     const data=getExportData();
-    let='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
-    let+='<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>招投标数据</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
-    let+='<style>td{mso-number-format:\\@;}.num{mso-number-format:#\\,##0;}.money{mso-number-format:\\#\\,##0_);[Red]\\(\\#\\,##0\\);}body{font-family:微软雅黑;font-size:12px;}th{background:#1a1a2e;color:white;font-weight:bold;text-align:center;}</style></head><body>';
-    let+='<table border="1"><tr><th>序号</th><th>运营商</th><th>项目名称</th><th>编号</th><th>类别</th><th>状态</th><th>预算(万元)</th><th>发布日期</th><th>截止日期</th><th>地区</th><th>采购机构</th></tr>';
+    let xlsContent='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+    xlsContent+='<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>招投标数据</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
+    xlsContent+='<style>td{mso-number-format:\\@;}.num{mso-number-format:#\\,##0;}.money{mso-number-format:\\#\\,##0_);[Red]\\(\\#\\,##0\\);}body{font-family:微软雅黑;font-size:12px;}th{background:#1a1a2e;color:white;font-weight:bold;text-align:center;}</style></head><body>';
+    xlsContent+='<table border="1"><tr><th>序号</th><th>运营商</th><th>项目名称</th><th>编号</th><th>类别</th><th>状态</th><th>预算(万元)</th><th>发布日期</th><th>截止日期</th><th>地区</th><th>采购机构</th></tr>';
     data.forEach((i,idx)=>{
         const s=getStatusInfo(i.status);
         let rowColor='';
         if(i.op==='cmcc')rowColor='background:#e8f4fd;';
         else if(i.op==='cucc')rowColor='background:#fef0f0;';
         else if(i.op==='ctcc')rowColor='background:#e0faf7;';
-        let+=`<tr style="${rowColor}"><td>${idx+1}</td><td>${OPERATOR_INFO[i.op].name}</td><td>${i.title}</td><td>${i.code}</td><td>${i.cat}</td><td>${s.t}</td><td class="money">${i.budget.toLocaleString()}</td><td class="num">${i.publishDate}</td><td class="num">${i.deadline}</td><td>${i.region}</td><td>${i.agency}</td></tr>\n`;
+        xlsContent+=`<tr style="${rowColor}"><td>${idx+1}</td><td>${OPERATOR_INFO[i.op].name}</td><td>${i.title}</td><td>${i.code}</td><td>${i.cat}</td><td>${s.t}</td><td class="money">${i.budget.toLocaleString()}</td><td class="num">${i.publishDate}</td><td class="num">${i.deadline}</td><td>${i.region}</td><td>${i.agency}</td></tr>\n`;
     });
-    let+='</table></body></html>';
-    downloadFile(let,'招投标数据_'+new Date().toLocaleDateString('zh-CN')+'.xls','application/vnd.ms-excel');
+    xlsContent+='</table></body></html>';
+    downloadFile(xlsContent,'招投标数据_'+new Date().toLocaleDateString('zh-CN')+'.xls','application/vnd.ms-excel');
     toast('success','✅ Excel 导出完成！（含运营商品牌色着色）');
 }
 
 function exportToPDF(){
-    // 使用浏览器打印功能生成PDF
     const data=getExportData();
     const win=window.open('','_blank');
-    let=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>招投标数据报告</title>
+    let pdfContent=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>招投标数据报告</title>
     <style>
     body{font-family:'Microsoft YaHei',sans-serif;padding:40px;color:#333;}
     h1{text-align:center;color:#1a1a2e;font-size:24px;margin-bottom:8px;}
@@ -1289,40 +1329,22 @@ function exportToPDF(){
     .summary{display:flex;gap:20px;margin-bottom:24px;flex-wrap:wrap;}
     .sum-card{flex:1;min-width:150px;background:#f5f7fa;padding:16px;border-radius:8px;text-align:center;}
     .sum-val{font-size:24px;font-weight:700;color:#1a1a2e;}.sum-lbl{font-size:12px;color:#888;margin-top:4px;}
-        @media print{body{padding:20px;} th{background:#1a1a2e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-    </style>
-    <!-- ==================== v4.0: API动态数据配置 ==================== -->
-    <script>
-    // ====== API配置 ======
-    const API_CONFIG = {
-        enabled: true,
-        baseUrl: (location.hostname==='localhost'||location.hostname==='127.0.0.1')
-            ? 'http://localhost:8765' : '',
-        endpoints: { bidding:'/api/bidding', stats:'/api/stats', crawl:'/api/crawl', sources:'/api/sources' }
-    };
-    const DataLoader={
-        async loadStats(){if(!API_CONFIG.enabled)return null;try{const r=await fetch(API_CONFIG.baseUrl+API_CONFIG.endpoints.stats,{signal:AbortSignal.timeout(5000)});const j=await r.json();return j?.data||null}catch(e){console.warn('[API]统计失败:',e.message);return null}},
-        async loadBidding(p={}){if(!API_CONFIG.enabled)return null;try{const qs=new URLSearchParams({limit:p.limit||200,sort_by:'publish_time',order:'desc',...p}).toString();const r=await fetch(API_CONFIG.baseUrl+API_CONFIG.endpoints.bidding+'?'+qs,{signal:AbortSignal.timeout(10000)});const j=await r.json();return(j?.data?.items||[]).map(i=>({id:i.id||i.project_code||('api-'+Math.random().toString(36).substr(2,9)),op:i.operator||'other',title:i.title||'',code:i.project_code||'',budget:i.budget||0,category:i.category||'other',status:{bidding:'bidding',upcoming:'upcoming',closing_soon:'urgent',result_published:'ended',ended:'ended'}[i.status]||'bidding',date:i.publish_time||'',deadline:i.deadline||'',region:i.region||'',purchaser:i.purchaser||'',source:i.source||'',sourceName:{yifangbao:'乙方宝',xunbiaobao:'百度寻标宝'}[i.source]||i.source,url:i.url||'#',summary:i.summary||i.title||'',tags:i.ai_tags||[],score:i.ai_relevance_score||0}))}catch(e){console.warn('[API]列表失败:',e.message);return null}},
-        async triggerCrawl(){try{return await(await fetch(API_CONFIG.baseUrl+API_CONFIG.endpoints.crawl,{method:'POST',signal:AbortSignal.timeout(5000)})).json()}catch(e){return{error:e.message}}},
-        isAvailable(){return API_CONFIG.enabled&&!!API_CONFIG.baseUrl}
-    };
-    </script></head><body>`;
-    let+=`<h1>📡 运营商招投标信息报告</h1><p class="subtitle">生成时间：${new Date().toLocaleString('zh-CN')} · 共 ${data.length} 条记录</p>`;
-    // 概要
+    @media print{body{padding:20px;} th{background:#1a1a2e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+    </style></head><body>`;
+    pdfContent+=`<h1>运营商招投标信息报告</h1><p class="subtitle">生成时间：${new Date().toLocaleString('zh-CN')} · 共 ${data.length} 条记录</p>`;
     const totalBudget=data.reduce((s,i)=>s+i.budget,0);
-    let+=`<div class="summary"><div class="sum-card"><div class="sum-val">${data.length}</div><div class="sum-lbl">总记录数</div></div>
+    pdfContent+=`<div class="summary"><div class="sum-card"><div class="sum-val">${data.length}</div><div class="sum-lbl">总记录数</div></div>
     <div class="sum-card"><div class="sum-val">${formatBudget(totalBudget)}</div><div class="sum-lbl">涉及金额</div></div>
     <div class="sum-card"><div class="sum-val">${data.filter(i=>i.op==='cmcc').length}</div><div class="sum-lbl">中国移动</div></div>
     <div class="sum-card"><div class="sum-val">${data.filter(i=>i.op==='cucc').length}</div><div class="sum-lbl">中国联通</div></div>
     <div class="sum-card"><div class="sum-val">${data.filter(i=>i.op==='ctcc').length}</div><div class="sum-lbl">中国电信</div></div></div>`;
-    // 表格
-    let+='<table><thead><tr><th>#</th><th>运营商</th><th>项目名称</th><th>类别</th><th>状态</th><th>预算</th><th>截止</th></tr></thead><tbody>';
+    pdfContent+='<table><thead><tr><th>#</th><th>运营商</th><th>项目名称</th><th>类别</th><th>状态</th><th>预算</th><th>截止</th></tr></thead><tbody>';
     data.slice(0,100).forEach((i,idx)=>{
         const cls=idx%2===0?'':' tr-even';const st=getStatusInfo(i.status);
-        let+=`<tr${cls}><td>${idx+1}</td><td>${OPERATOR_INFO[i.op].name}</td><td>${i.title}</td><td>${i.cat}</td><td>${st.t}</td><td class="money">${formatBudget(i.budget)}</td><td>${i.deadline}</td></tr>\n`;
+        pdfContent+=`<tr class="${cls}"><td>${idx+1}</td><td>${OPERATOR_INFO[i.op].name}</td><td>${i.title}</td><td>${i.cat}</td><td>${st.t}</td><td class="money">${formatBudget(i.budget)}</td><td>${i.deadline}</td></tr>\n`;
     });
-    let+='</tbody></table></body></html>';
-    win.document.write(let);win.document.close();
+    pdfContent+='</tbody></table></body></html>';
+    win.document.write(pdfContent);win.document.close();
     setTimeout(()=>{win.print();toast('success','📄 PDF 报告已生成！请在打印对话框中选择"另存为PDF"');},500);
 }
 
@@ -1360,8 +1382,7 @@ async function init(){
     renderStats();
     renderResults();
     setupAutoRefresh();
-    toast('success', '👋 平台已就绪！共 ' + state.allData.length + ' 条招标数据 · ' + (success ? 'API实时数据' : '内置静态数据'));
-    showToast('系统就绪 · ' + (success ? '已从API加载最新数据' : '使用内置数据'), 'info', 2000);
+    toast('success', '平台已就绪！共 ' + state.allData.length + ' 条招标数据 · ' + (success ? 'API实时数据' : '内置静态数据'));
     console.log('%c📡 运营商招投标信息跟踪平台', 'color:#09c;font-size:16px;font-weight:bold;');
     console.log('%c数据加载完成：' + state.allData.length + ' 条记录', 'color:#666;');
 }
