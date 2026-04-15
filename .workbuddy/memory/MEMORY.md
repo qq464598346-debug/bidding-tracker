@@ -6,7 +6,7 @@
 - **Pages地址**: https://qq464598346-debug.github.io/bidding-tracker/
 - **位置**: c:\Users\46459\WorkBuddy\20260415001242\
 - **前端**: index.html (纯HTML/CSS/JS单文件应用, 60+条内置数据, 零依赖)
-- **Git代理**: http://127.0.0.1:15761（最新）
+- **Git代理**: http://127.0.0.1:23000（最新）
 
 ## 技术方案（最终版）
 - 纯前端自包含单页应用，不依赖后端/爬虫
