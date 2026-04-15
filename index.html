@@ -246,6 +246,17 @@
         .detail-desc-value{ font-size:14px;line-height:1.8;color:var(--text-secondary);background:#f8f9fa;padding:16px;border-radius:8px; }
         .detail-tags{ display:flex;gap:6px;flex-wrap:wrap;margin-top:8px; }
         .detail-tag{ padding:4px 12px;background:#e8f5e9;color:#2e7d32;border-radius:20px;font-size:12px; }
+        /* 原文链接按钮 */
+        .btn-source-link{ display:inline-flex; align-items:center; gap:6px; padding:10px 20px;
+            background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff !important;
+            border-radius:10px; font-size:14px; font-weight:600; text-decoration:none !important;
+            transition:all 0.3s ease; box-shadow:0 2px 8px rgba(102,126,234,0.3); cursor:pointer;}
+        .btn-source-link:hover{ transform:translateY(-2px); box-shadow:0 4px 16px rgba(102,126,234,0.45); }
+        /* 卡片/列表上的原文入口 */
+        .card-link-btn, .row-link-btn{ display:inline-flex; align-items:center; gap:3px; font-size:12px; color:var(--primary);
+            text-decoration:none !important; opacity:0; transition:all 0.2s ease; cursor:pointer; margin-left:auto; flex-shrink:0;}
+        .bidding-card:hover .card-link-btn, .bidding-row:hover .row-link-btn{ opacity:1; }
+        .card-link-btn:hover, .row-link-btn:hover{ color:var(--primary-dark); text-decoration:underline; }
         .winner-box{ grid-column:1/-1; background:linear-gradient(135deg,#e8f5e9,#c8e6c9); padding:16px;border-radius:10px; margin-top:4px; }
 
         /* Toast Notification */
@@ -674,10 +685,17 @@ const state = {
 };
 
 const OPERATOR_INFO = {
-    cmcc: {name:'中国移动',icon:'📱',color:'#09c'},
-    cucc: {name:'中国联通',icon:'📞',color:'#e60012'},
-    ctcc: {name:'中国电信',icon:'☎️',color:'#00a699'}
+    cmcc: {name:'中国移动',icon:'📱',color:'#09c', baseUrl:'https://b2b.10086.cn/b2b/main/listVendorNotice.html?noticeId='},
+    cucc: {name:'中国联通',icon:'📞',color:'#e60012', baseUrl:'https://www.chinaunicombidding.cn/jsp/web/searchNoticeDetail.jsp?noticeId='},
+    ctcc: {name:'中国电信',icon:'☎️',color:'#00a699', baseUrl:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/viewNoticeDetail.html?noticeId='}
 };
+
+// 根据运营商自动生成原文链接（每条数据都会自动带上）
+function genSourceUrl(item){
+    if(item.url)return item.url;
+    const op=OPERATOR_INFO[item.op];
+    return op?op.baseUrl+(item.code||item.id):'#';
+}
 
 // ============================================================
 // 🔧 工具函数
@@ -795,6 +813,7 @@ function renderResults() {
 
 function renderCard(item){
     const st=getStatusInfo(item.status),daysLeft=getDaysLeft(item.deadline),op=OPERATOR_INFO[item.op];
+    const srcUrl=genSourceUrl(item);
     return `<div class="bidding-card" onclick="showDetail('${item.id}')">
     <div class="card-header"><span class="card-operator ${item.op}">${op.icon}${op.name}</span><span class="card-status-badge ${st.c}">${st.t}</span></div>
     <div class="card-body">
@@ -807,16 +826,18 @@ function renderCard(item){
         </div>
         <span class="card-category ${getCatClass(item.cat)}">${item.cat}</span>
     </div>
-    <div class="card-footer"><span class="card-budget">¥${formatBudget(item.budget)}</span><span class="card-deadline">截止: ${item.deadline}</span></div></div>`;
+    <div class="card-footer"><span class="card-budget">¥${formatBudget(item.budget)}</span><a href="${srcUrl}" target="_blank" rel="noopener noreferrer" class="card-link-btn" onclick="event.stopPropagation()" title="查看原文">🔗 原文</a><span class="card-deadline">截止: ${item.deadline}</span></div></div>`;
 }
 
 function renderRow(item){
     const st=getStatusInfo(item.status),op=OPERATOR_INFO[item.op];
+    const srcUrl=genSourceUrl(item);
     return `<div class="bidding-row" onclick="showDetail('${item.id}')">
     <div class="row-op-icon" style="background:${op.color}">${op.icon}</div>
     <div class="row-title">${item.title}</div>
     <div class="row-cat"><span class="${getCatClass(item.cat)}">${item.cat}</span></div>
     <div class="row-budget">¥${formatBudget(item.budget)}</div>
+    <a href="${srcUrl}" target="_blank" rel="noopener noreferrer" class="row-link-btn" onclick="event.stopPropagation()" title="查看原文">🔗原文</a>
     <div class="row-deadline">${getDaysLeft(item.deadline)}<br><small>${item.deadline}</small></div>
     <div class="row-status"><span class="card-status-badge ${st.c}">${st.t}</span></div>
     </div>`;
@@ -845,12 +866,13 @@ function showDetail(id){
     const st=getStatusInfo(item.status),op=OPERATOR_INFO[item.op],daysLeft=getDaysLeft(item.deadline);
     const wBox=item.winnerInfo?`<div class="winner-box"><strong>🏆 中标结果：</strong>${item.winnerInfo.winner} | 中标金额：${item.winnerInfo.amount}</div>`:'';
     document.getElementById('detailModal').classList.add('show');
+    const srcUrl = genSourceUrl(item);
     document.getElementById('modalContent').innerHTML=`
     <div class="modal-header"><h2>${item.title}</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
         <div class="detail-grid">
             <div class="detail-item"><div class="detail-label">运营商</div><div class="detail-value">${op.icon} ${op.name}</div></div>
-            <div class="detail-item"><div class="detail-label">项目编号</div><div class="detail-value">${item.code}</div></div>
+            <div class="detail-item"><div class="detail-label">项目编号</div><div class="detail-value"><code style="background:#f0f2f5;padding:2px 8px;border-radius:4px;font-size:13px;">${item.code}</code></div></div>
             <div class="detail-item"><div class="detail-label">项目类别</div><div class="detail-value"><span class="card-category ${getCatStyle(item.cat)}">${item.cat}</span></div></div>
             <div class="detail-item"><div class="detail-label">当前状态</div><div class="detail-value"><span class="card-status-badge ${st.c}">${st.t}</span> · ${daysLeft}</div></div>
             <div class="detail-item"><div class="detail-label">预算金额</div><div class="detail-value" style="color:#c62828;font-size:18px;font-weight:700">¥${formatBudget(item.budget)}</div></div>
@@ -858,10 +880,15 @@ function showDetail(id){
             <div class="detail-item"><div class="detail-label">发布日期</div><div class="detail-value">${item.publishDate}</div></div>
             <div class="detail-item"><div class="detail-label">投标截止</div><div class="detail-value" style="font-weight:700">${item.deadline}</div></div>
             <div class="detail-item"><div class="detail-label">适用地区</div><div class="detail-value">${item.region}</div></div>
-            <div class="detail-item"><div class="detail-label">数据来源</div><div class="detail-value">${op.name}采购官网</div></div>
             <div class="detail-item detail-desc"><div class="detail-label">项目详情</div><div class="detail-desc-value">${item.desc}</div></div>
             ${wBox}
             <div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">关键词标签</div><div class="detail-tags">${item.tags.map(t=>`<span class="detail-tag">#${t}</span>`).join('')}</div></div>
+        </div>
+        <div class="modal-footer" style="margin-top:20px; padding-top:16px; border-top:1px solid #eee; display:flex; gap:10px; justify-content:flex-end;">
+            <a href="${srcUrl}" target="_blank" rel="noopener noreferrer" class="btn-source-link" onclick="event.stopPropagation()">
+                🔗 查看原文（${op.name}采购官网）
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-left:4px;"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
         </div>
     </div>`;
 }
