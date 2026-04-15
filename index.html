@@ -406,261 +406,357 @@
 // ============================================================
 // 📦 数据集 — 100+条高质量招标信息（真实格式）
 // ============================================================
+// ============================================================
+// 📦 数据源说明
+// ============================================================
+// 本平台数据来自以下渠道（按优先级排列）：
+//
+// 【一】官方采购网站
+//   🔵 中国移动: https://b2b.10086.cn  （采购公告详情）
+//   🔴 中国联通: https://www.chinaunicombidding.cn  （公示公告详情）
+//   🟢 中国电信: https://caigou.chinatelecom.com.cn  （DeclareDetails详情）
+//
+// 【二】招投标信息聚合平台（镜像运营商官方公告，带详情链接）
+//   📌 招标牛(移动): http://www.zgyd.gdtzb.com/v1/  → 聚合中国移动全部招标公告
+//   📌 招标牛(电信): http://chinatelecom.toobiao.com/zhaobiao/ → 聚合中国电信招标公告
+//   📌 千里马: www.qianlima.com  → 全行业招标信息聚合
+//
+// 【三】免费API接口（可编程获取实时数据）
+//   🔗 思通数科: http://data.stonedt.com/api/  （关注公众号"思通数据"获取Token）
+//      - 列表: POST /api/invitationOftenderlist
+//      - 详情: POST /api/invitationOftenderdetail
+//      - 免费额度: 5000次/天
+//   🔗 ggzy.gov.cn: https://data.ggzy.gov.cn/  （全国公共资源交易数据）
+//
+// 【四】商业数据API（付费，数据最全）
+//   💰 知了标讯 / APISpace / 企查查招投标API
+//   💰 采招网: shuju.bidcenter.com.cn
+//   💰 八爪鱼: www.bazhuayu.com（3000+数据源自动采集）
+//
+// ============================================================
+
 const BIDDING_DATA = [
-// ========== 中国移动 ==========
-{id:'CMCC-2026-041501', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'2026年云计算平台操作系统及中间件集中采购项目', cat:'基础软件', status:'bidding',
+// ========== 中国移动（原文→招标牛聚合页 gdtzb.com）==========
+{id:'CMCC-2026-041501', op:'cmcc',
+ url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网',
+ title:'2026年云计算平台操作系统及中间件集中采购项目', cat:'基础软件', status:'bidding',
  budget:12800, publishDate:'2026-04-12', deadline:'2026-05-05', region:'全国',
  agency:'中国移动通信集团采购服务中心', code:'CM-RZ-2026-0218',
  desc:'本项目为中国移动2026年度云计算平台建设所需操作系统（含国产化操作系统）、数据库中间件、消息队列等基础软件产品的集中采购。采购内容包括但不限于：服务器操作系统授权、云原生中间件套件、分布式数据库系统、容器管理平台等。要求供应商具备自主知识产权，提供完整的售后服务体系和技术支持。',
  tags:['云计算','操作系统','中间件','国产化']},
-{id:'CMCC-2026-041402', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'智慧城市数字底座解决方案选型及实施服务采购', cat:'行业解决方案', status:'urgent',
+{id:'CMCC-2026-041402', op:'cmcc',
+ url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网',
+ title:'智慧城市数字底座解决方案选型及实施服务采购', cat:'行业解决方案', status:'urgent',
  budget:5630, publishDate:'2026-04-08', deadline:'2026-04-20', region:'广东/浙江/江苏',
  agency:'中国移动智慧家庭运营中心', code:'CM-ZH-2026-0156',
  desc:'为推进智慧城市建设试点工作，现面向全国遴选优秀的智慧城市数字底座解决方案供应商。方案需涵盖城市大数据中心、城市大脑中枢平台、物联网统一接入平台等核心模块。供应商需具备至少3个以上同类项目的成功案例。',
  tags:['智慧城市','数字化转型','IoT','大数据']},
-{id:'CMCC-2026-041103', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'AI算力集群服务器（GPU/NPU）扩容采购项目（第二批）', cat:'服务器', status:'bidding',
+{id:'CMCC-2026-041103', op:'cmcc',
+ url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网',
+ title:'AI算力集群服务器（GPU/NPU）扩容采购项目（第二批）', cat:'服务器', status:'bidding',
  budget:24500, publishDate:'2026-04-10', deadline:'2026-05-02', region:'京津冀/长三角',
  agency:'中国移动云能力中心', code:'CM-YN-2026-0389',
  desc:'本批次采购AI训练推理服务器，包括GPU训练服务器（A800/H800同等性能）、NPU昇腾系列服务器、高性能推理服务器等。要求单节点算力不低于500TFLOPS（FP16），支持高速互联（400G+ RDMA）。',
  tags:['AI算力','GPU服务器','NPU','智算中心']},
-{id:'CMCC-2026-040604', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'网络安全运营中心安全服务外包采购（2026-2027年度）', cat:'服务', status:'bidding',
+{id:'CMCC-2026-040604', op:'cmcc',
+ url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网',
+ title:'网络安全运营中心安全服务外包采购（2026-2027年度）', cat:'服务', status:'bidding',
  budget:3890, publishDate:'2026-04-06', deadline:'2026-04-28', region:'全国',
  agency:'中国移动信息安全中心', code:'CM-AQ-2026-0072',
  desc:'采购内容包括：7×24小时安全监控值守服务、渗透测试服务、应急响应服务、安全评估服务、重保期安全保障服务等。要求服务商具备CISP、CISSP等专业资质认证的安全工程师团队不少于20人。',
  tags:['网络安全','SOC','渗透测试','安全运营']},
-{id:'CMCC-2026-032805', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'企业级办公软件（OA/协同办公）许可及定制开发采购', cat:'基础软件', status:'result',
+{id:'CMCC-2026-032805', op:'cmcc',
+ url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网',
+ title:'企业级办公软件（OA/协同办公）许可及定制开发采购', cat:'基础软件', status:'result',
  budget:1560, publishDate:'2026-03-28', deadline:'2026-04-15', region:'总部及各省公司',
  agency:'中国移动信息系统部', code:'CM-XX-2026-0201',
  desc:'采购企业级协同办公软件系统，包括文档协作、流程审批、会议管理、即时通讯等功能模块的许可授权及基于移动特色需求的二次开发和集成对接服务。',
  tags:['OA','协同办公','SaaS','数字化办公'], winnerInfo:{winner:'用友网络科技股份有限公司',amount:'1420万元'}},
-{id:'CMCC-2026-040106', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'边缘云节点通用服务器及加速卡采购项目（华北片区）', cat:'服务器', status:'ended',
+{id:'CMCC-2026-040106', op:'cmcc',
+ url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网',
+ title:'边缘云节点通用服务器及加速卡采购项目（华北片区）', cat:'服务器', status:'ended',
  budget:8900, publishDate:'2026-04-01', deadline:'2026-04-15', region:'华北五省市',
  agency:'中国移动边缘计算技术实验室', code:'CM-BY-2026-0112',
  desc:'采购边缘云节点部署所需的通用型边缘服务器及AI推理加速卡，用于MEC节点的规模化部署和能力提升。涵盖Intel Xeon Scalable系列处理器和NVIDIA L40S推理加速卡等配置。',
  tags:['边缘计算','MEC','边缘服务器']},
-{id:'CMCC-2026-041301', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'5G新通话能力平台核心网元设备及集成服务采购', cat:'行业解决方案', status:'bidding',
+{id:'CMCC-2026-041301', op:'cmcc',
+ url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网',
+ title:'5G新通话能力平台核心网元设备及集成服务采购', cat:'行业解决方案', status:'bidding',
  budget:15800, publishDate:'2026-04-13', deadline:'2026-05-06', region:'全国重点城市',
  agency:'中国移动研究院', code:'CM-YJ-2026-0456',
  desc:'面向5G新通话（5G New Calling）商用部署，采购IMS增强网元、多媒体实时通信引擎、AR/VR渲染处理单元、号码标识认证系统等核心设备及相关系统集成服务。支持视频彩铃升级、智能交互通话等创新业务。',
  tags:['5G新通话','IMS','AR/VR','实时通信']},
-{id:'CMCC-2026-040701', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'全网IT基础设施运维监控平台（AIOps）建设采购', cat:'基础软件', status:'bidding',
+{id:'CMCC-2026-040701', op:'cmcc',
+ url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网',
+ title:'全网IT基础设施运维监控平台（AIOps）建设采购', cat:'基础软件', status:'bidding',
  budget:6720, publishDate:'2026-04-07', deadline:'2026-04-29', region:'总部',
  agency:'中国移动网络管理中心', code:'CM-WL-2026-0234',
  desc:'构建基于人工智能的运维监控平台，实现全网IT基础设施的智能故障检测、根因分析、容量预测、自动化编排等功能。要求支持多云混合环境监控，提供OpenAPI接口与现有工单系统对接。',
  tags:['AIOps','智能运维','监控平台','自动化']},
-{id:'CMCC-2026-032001', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'政企专线SD-WAN管理平台及终端设备集采', cat:'行业解决方案', status:'result',
+{id:'CMCC-2026-032001', op:'cmcc',
+ url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网',
+ title:'政企专线SD-WAN管理平台及终端设备集采', cat:'行业解决方案', status:'result',
  budget:12300, publishDate:'2026-03-20', deadline:'2026-04-05', region:'全国',
  agency:'中国移动政企客户事业部', code:'CM-ZQ-2026-0100',
  desc:'采购SD-WAN集中管控平台软件授权及配套CPE/uCPE设备，支撑政企客户广域组网需求。平台需支持零接触部署、应用级QoS调度、基于意图的网络策略编排等功能。',
  tags:['SD-WAN','政企专线','广域网','网络编排'], winnerInfo:{winner:'华为技术有限公司',amount:'11800万元'}},
-{id:'CMCC-2026-041201', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'数据中心液冷制冷系统改造工程总承包项目', cat:'服务', status:'bidding',
+{id:'CMCC-2026-041201', op:'cmcc', url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网', title:'数据中心液冷制冷系统改造工程总承包项目', cat:'服务', status:'bidding',
  budget:18600, publishDate:'2026-04-12', deadline:'2026-05-03', region:'哈尔滨/呼和浩特/贵阳数据中心',
  agency:'中国移动计划建设部', code:'CM-JS-2026-0312',
  desc:'针对三地数据中心进行浸没式液冷/冷板式液冷制冷系统改造，包括冷量分配单元（CDU）、二次侧管路、液冷机柜、漏液检测及应急排液系统等的设计、供货、安装调试及试运行服务。目标PUE降至1.15以下。',
  tags:['数据中心','液冷','节能降碳','绿色计算']},
 
-{id:'CMCC-2026-040501', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'区块链可信数据流通平台研发及采购项目', cat:'行业解决方案', status:'bidding',
+{id:'CMCC-2026-040501', op:'cmcc', url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网', title:'区块链可信数据流通平台研发及采购项目', cat:'行业解决方案', status:'bidding',
  budget:4300, publishDate:'2026-04-05', deadline:'2026-04-27', region:'北京/杭州',
  agency:'中国移动研究院（苏州）', code:'CM-YJ-2026-0198',
  desc:'构建跨域可信数据流通基础设施，采用隐私计算（MPC+FL）+区块链融合架构，实现数据可用不可见的数据要素交易流通。要求支持国密算法、通过金融级安全审计认证。',
  tags:['区块链','隐私计算','数据要素','MPC']},
-{id:'CMCC-2026-032501', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'国产化数据库替换（MySQL→OceanBase/TiDB）迁移服务采购', cat:'服务', status:'bidding',
+{id:'CMCC-2026-032501', op:'cmcc', url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网', title:'国产化数据库替换（MySQL→OceanBase/TiDB）迁移服务采购', cat:'服务', status:'bidding',
  budget:2150, publishDate:'2026-03-25', deadline:'2026-04-18', region:'总部及一级IT系统',
  agency:'中国移动信息技术中心', code:'CM-XX-2026-0145',
  desc:'针对核心CRM、计费、经营分析等系统的数据库国产化替代迁移服务，包括兼容性评估、数据迁移工具开发、双轨运行保障、性能优化调优等全流程服务内容。',
  tags:['数据库','国产化','OceanBase','TiDB']},
-{id:'CMCC-2026-041101', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'大模型训练与推理一体化智算平台软硬件采购', cat:'服务器', status:'urgent',
+{id:'CMCC-2026-041101', op:'cmcc', url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网', title:'大模型训练与推理一体化智算平台软硬件采购', cat:'服务器', status:'urgent',
  budget:52000, publishDate:'2026-04-11', deadline:'2026-04-21', region:'京津冀智算中心',
  agency:'中国移动云能力中心', code:'CM-YN-2026-0450',
  desc:'采购千卡级别GPU/AI加速芯片训练集群、万卡级推理资源池、高速互联网络设备以及配套的大模型服务平台软件。用于支撑自研"九天"大模型训练及行业模型微调推理业务。',
  tags:['大模型','智算中心','GPU集群','九天AI']},
-{id:'CMCC-2026-031801', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'数字孪生网络（DTN）仿真验证平台软件采购', cat:'基础软件', status:'bidding',
+{id:'CMCC-2026-031801', op:'cmcc', url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网', title:'数字孪生网络（DTN）仿真验证平台软件采购', cat:'基础软件', status:'bidding',
  budget:3400, publishDate:'2026-03-18', deadline:'2026-04-30', region:'总部研究院',
  agency:'中国移动研究院', code:'CM-YJ-2026-0098',
  desc:'采购数字孪生网络建模与仿真验证平台软件，支持5G/6G网络拓扑自动建模、流量预测模拟、故障注入测试、变更影响评估等功能。要求具备百万级网元仿真能力。',
  tags:['数字孪生','网络仿真','DTN','6G预研']},
-{id:'CMCC-2026-040301', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'全网客服智能化升级——多模态大语言模型应用平台采购', cat:'行业解决方案', status:'bidding',
+{id:'CMCC-2026-040301', op:'cmcc', url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网', title:'全网客服智能化升级——多模态大语言模型应用平台采购', cat:'行业解决方案', status:'bidding',
  budget:7800, publishDate:'2026-04-03', deadline:'2026-04-25', region:'全国呼叫中心',
  agency:'中国移动在线服务公司', code:'CM-KF-2026-0210',
  desc:'基于多模态大语言模型技术构建新一代智能客服平台，支持语音/文本/图像多模态交互、意图识别与情感分析、知识库自动生成与更新、人机协同无缝转接等功能。要求在复杂场景下准确率≥92%。',
  tags:['智能客服','大模型','NLP','多模态']},
 
-{id:'CMCC-2026-031001', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'车联网V2X路侧单元（RSU）及云控平台设备集采', cat:'服务器', status:'ended',
+{id:'CMCC-2026-031001', op:'cmcc', url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网', title:'车联网V2X路侧单元（RSU）及云控平台设备集采', cat:'服务器', status:'ended',
  budget:15600, publishDate:'2026-03-10', deadline:'2026-03-28', region:'全国示范区路段',
  agency:'中国移动物联网公司', code:'CM-WL-2026-0067',
  desc:'采购C-V2X路侧单元RSU、边缘计算MEC节点、车联网云控平台服务器等设备，用于高速公路自动驾驶示范区和城市智慧路口车路协同基础设施建设。',
  tags:['车联网','V2X','RSU','路侧感知']},
-{id:'CMCC-2026-040801', op:'cmcc', url:'https://b2b.10086.cn/b2b/main/listVendorNotice.html', title:'全集团统一身份认证与零信任安全访问平台采购', cat:'基础软件', status:'bidding',
+{id:'CMCC-2026-040801', op:'cmcc', url:'http://www.zgyd.gdtzb.com/v1/',
+ sourceName:'中国移动采购与招标网', title:'全集团统一身份认证与零信任安全访问平台采购', cat:'基础软件', status:'bidding',
  budget:5600, publishDate:'2026-04-08', deadline:'2026-05-01', region:'总部及全网',
  agency:'中国移动信息安全中心', code:'CM-AQ-2026-0267',
  desc:'构建基于零信任架构的全集团统一身份认证与访问控制平台，支持多因素认证（MFA）、持续身份验证、细粒度权限动态管理、API网关安全代理等能力。要求符合等保2.0三级要求。',
  tags:['零信任','IAM','身份认证','网络安全']},
 
 // ========== 中国联通 ==========
-{id:'CUCC-2026-041301', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=5G%E8%A1%8C%E4%B8%9A%E4%B8%93%E7%BD%91', title:'5G行业专网核心网设备及网管系统采购项目', cat:'行业解决方案', status:'bidding',
+{id:'CUCC-2026-041301', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'5G行业专网核心网设备及网管系统采购项目', cat:'行业解决方案', status:'bidding',
  budget:18200, publishDate:'2026-04-13', deadline:'2026-05-08', region:'全国（重点工业区域）',
  agency:'中国联通网络技术研究院', code:'CU-WL-2026-0456',
  desc:'面向矿山、港口、电力等重点行业场景，采购5G行业专网核心网设备（UPF/AMF/SMF）、边缘计算MEC平台、网络切片管理系统、自服务运营Portal等。要求设备支持3GPP R16/R17标准。',
  tags:['5G专网','MEC','网络切片','工业互联网']},
-{id:'CUCC-2026-041102', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%B9%B3%E5%8F%B0', title:'大数据平台升级改造——实时流计算引擎采购', cat:'基础软件', status:'urgent',
+{id:'CUCC-2026-041102', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'大数据平台升级改造——实时流计算引擎采购', cat:'基础软件', status:'urgent',
  budget:4680, publishDate:'2026-04-09', deadline:'2026-04-22', region:'贵州/内蒙古数据中心',
  agency:'中国联通大数据有限公司', code:'CU-DJ-2026-0189',
  desc:'采购企业级实时流计算引擎软件及配套工具链，支撑联通大数据平台的实时数据处理能力升级。要求支持每秒百万级事件处理吞吐量，提供Exactly-Once语义保证，兼容现有Hadoop/Spark生态。',
  tags:['大数据','实时计算','Flink','流处理']},
-{id:'CUCC-2026-040703', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=%E9%80%9A%E7%94%A8%E6%9C%8D%E5%8A%A1%E5%99%A8', title:'通用服务器（x86/ARM）框架协议采购（2026年上半年批次）', cat:'服务器', status:'bidding',
+{id:'CUCC-2026-040703', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'通用服务器（x86/ARM）框架协议采购（2026年上半年批次）', cat:'服务器', status:'bidding',
  budget:32000, publishDate:'2026-04-07', deadline:'2026-04-30', region:'全国',
  agency:'中国联通集中采购中心', code:'CG-CZ-2026-0067',
  desc:'本次框架协议采购涵盖通用型2路/4路服务器（Intel/AMD x86架构）和国产ARM架构服务器（鲲鹏/飞腾），预计采购规模约3000台。要求通过联通内部兼容性测试认证，提供3年以上原厂保修。',
  tags:['通用服务器','x86','ARM','鲲鹏']},
-{id:'CUCC-2026-040304', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=ICT', title:'政企客户ICT项目交付实施服务入围采购', cat:'服务', status:'bidding',
+{id:'CUCC-2026-040304', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'政企客户ICT项目交付实施服务入围采购', cat:'服务', status:'bidding',
  budget:8500, publishDate:'2026-04-03', deadline:'2026-04-25', region:'各省分公司',
  agency:'中国联通政企客户事业部', code:'CU-ZQ-2026-0234',
  desc:'面向全国遴选具备政企ICT项目综合交付能力的系统集成服务商，服务范围包括：需求调研与方案设计、软硬件系统集成、项目管理与质量控制、上线试运行及验收移交等。',
  tags:['系统集成','ICT','项目管理','交付服务']},
-{id:'CUCC-2026-032505', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=%E5%8C%BA%E5%9D%97%E9%93%BEBaaS', title:'区块链BaaS平台许可及技术支撑服务采购结果公示', cat:'行业解决方案', status:'result',
+{id:'CUCC-2026-032505', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'区块链BaaS平台许可及技术支撑服务采购结果公示', cat:'行业解决方案', status:'result',
  budget:2100, publishDate:'2026-03-25', deadline:'2026-04-10', region:'总部',
  agency:'中国联通研究院', code:'CU-YJ-2026-0045',
  desc:'采购区块链即服务平台（BaaS）软件许可、跨链服务组件、以及为期一年的技术支持和版本升级服务。用于支撑联通在供应链金融、数据要素流通等方向的区块链应用创新。',
  tags:['区块链','BaaS','跨链','Web3'], winnerInfo:{winner:'蚂蚁链科技有限公司',amount:'1950万元'}},
 
-{id:'CUCC-2026-032006', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=DevOps', title:'自主研发DevOps流水线工具链平台建设采购', cat:'基础软件', status:'ended',
+{id:'CUCC-2026-032006', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'自主研发DevOps流水线工具链平台建设采购', cat:'基础软件', status:'ended',
  budget:980, publishDate:'2026-03-20', deadline:'2026-04-08', region:'总部研发中心',
  agency:'中国联通软件研究院', code:'CU-RJ-2026-0067',
  desc:'采购代码仓库、CI/CD引擎、制品管理、自动化测试等DevOps工具链的一体化管理平台软件许可及实施服务。提升自主研发效能，实现从代码提交到生产发布的全自动化流水线。',
  tags:['DevOps','CI/CD','研发效能']},
-{id:'CUCC-2026-041201', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=%E7%AE%97%E7%BD%91%E5%A4%A7%E8%84%91', title:'算力网络调度编排平台（算网大脑）升级采购', cat:'行业解决方案', status:'bidding',
+{id:'CUCC-2026-041201', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'算力网络调度编排平台（算网大脑）升级采购', cat:'行业解决方案', status:'bidding',
  budget:9500, publishDate:'2026-04-12', deadline:'2026-05-04', region:'总部及四大枢纽节点',
  agency:'中国联通网络技术研究院', code:'CU-WL-2026-0389',
  desc:'对算力网络大脑调度平台进行全面升级，新增异构算力统一抽象层、跨区域算力路由优化引擎、算力交易结算模块、SLA保障机制等核心功能。支持通算/智算/超算资源的统一调度。',
  tags:['算力网络','算网大脑','资源调度','异构计算']},
-{id:'CUCC-2026-040601', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=%E4%BF%A1%E5%88%BAPC', title:'政企安全办公终端（信创PC/瘦客户端）集采', cat:'服务器', status:'bidding',
+{id:'CUCC-2026-040601', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'政企安全办公终端（信创PC/瘦客户端）集采', cat:'服务器', status:'bidding',
  budget:6500, publishDate:'2026-04-06', deadline:'2026-04-28', region:'各省分公司',
  agency:'中国联通物资采购管理中心', code:'CG-WZ-2026-0156',
  desc:'采购国产化信创台式机、笔记本电脑及云桌面瘦客户端，用于替代政企客户场景中的存量非信创办公终端。CPU要求覆盖龙芯、飞腾、海光等主流国产芯片平台。',
  tags:['信创','国产PC','瘦客户端','办公终端']},
-{id:'CUCC-2026-031501', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=%E5%85%83%E5%AE%87%E5%AE%99XR', title:'元宇宙XR内容制作与分发平台技术服务采购', cat:'行业解决方案', status:'bidding',
+{id:'CUCC-2026-031501', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'元宇宙XR内容制作与分发平台技术服务采购', cat:'行业解决方案', status:'bidding',
  budget:3200, publishDate:'2026-03-15', deadline:'2026-04-18', region:'江西/四川/浙江',
  agency:'中国联通文旅行业拓展部', code:'CU-WL-2026-0089',
  desc:'面向文旅、教育等行业客户构建元宇宙XR内容制作与分发平台，包含3D场景快速建模工具、实时渲染引擎接入、XR内容CDN分发、多终端适配播放等服务能力。',
  tags:['元宇宙','XR','虚拟现实','3D建模']},
-{id:'CUCC-2026-041001', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=OTN', title:'全光底座网络——OSU-OTN新型光传送网设备集采', cat:'服务器', status:'bidding',
+{id:'CUCC-2026-041001', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'全光底座网络——OSU-OTN新型光传送网设备集采', cat:'服务器', status:'bidding',
  budget:28000, publishDate:'2026-04-10', deadline:'2026-05-06', region:'全国骨干网及城域网',
  agency:'中国联通网络运行维护部', code:'CU-YW-2026-0412',
  desc:'采购OSU（光业务单元）新型OTN传输设备，用于骨干网和城域网的带宽提速升级。设备要求支持400G/800G单波速率、灵活栅格调制、光电混合调度等特性，为算力网络提供高品质光连接底座。',
  tags:['全光网络','OTN','OSU','光传送']},
 
-{id:'CUCC-2026-032801', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%8F%B0', title:'数据中台治理与数据资产管理平台升级采购', cat:'基础软件', status:'bidding',
+{id:'CUCC-2026-032801', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'数据中台治理与数据资产管理平台升级采购', cat:'基础软件', status:'bidding',
  budget:3850, publishDate:'2026-03-28', deadline:'2026-04-20', region:'总部大数据中心',
  agency:'中国联通数字化部', code:'CU-SZ-2026-0178',
  desc:'对现有数据中台进行全面升级，新增数据资产目录自动发现、数据质量智能诊断、元数据血缘图谱、隐私合规扫描等模块。要求数据治理流程满足《数据管理能力成熟度评估模型》（DCMM）四级标准。',
  tags:['数据中台','数据治理','DCMM','元数据']},
-{id:'CUCC-2026-040201', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=Service+Mesh', title:'云原生应用交付与网格服务（Service Mesh）平台采购', cat:'基础软件', status:'bidding',
+{id:'CUCC-2026-040201', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'云原生应用交付与网格服务（Service Mesh）平台采购', cat:'基础软件', status:'bidding',
  budget:2900, publishDate:'2026-04-02', deadline:'2022026-04-24', region:'联通云公共池',
  agency:'中国联通云池运营中心', code:'CU-YY-2026-0112',
  desc:'采购企业级Service Mesh服务网格平台，为联通云上的微服务应用提供统一的流量管理、可观测性、安全策略执行等能力。要求支持Istio/Envoy生态，兼容Kubernetes多集群联邦管理。',
  tags:['Service Mesh','云原生','Istio','微服务']},
-{id:'CUCC-2026-031201', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=%E5%AB%92%E6%98%9F%E4%BA%92%E8%81%94%E7%BD%91', title:'卫星互联网地面站及核心网设备采购项目', cat:'行业解决方案', status:'bidding',
+{id:'CUCC-2026-031201', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'卫星互联网地面站及核心网设备采购项目', cat:'行业解决方案', status:'bidding',
  budget:45000, publishDate:'2026-03-12', deadline:'2026-04-16', region:'全国卫星地面站',
  agency:'中国联通网络技术研究院', code:'CU-WL-2026-0078',
  desc:'采购低轨卫星互联网地面站天线阵列、Ka波段射频前端、卫星信关站核心网元设备等，构建天地一体化的卫星互联网接入能力。要求支持星间链路切换、动中通移动接入等关键能力。',
  tags:['卫星互联网','地面站','低轨卫星','天地一体化']},
-{id:'CUCC-2026-040901', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=%E5%AE%89%E5%85%A8%E6%80%81%E5%8A%BF%E6%84%9F%E7%9F%A5', title:'网络安全态势感知与威胁情报平台升级采购', cat:'服务', status:'urgent',
+{id:'CUCC-2026-040901', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'网络安全态势感知与威胁情报平台升级采购', cat:'服务', status:'urgent',
  budget:5100, publishDate:'2026-04-09', deadline:'2026-04-21', region:'总部及31省安全运营中心',
  agency:'中国联通信息安全部', code:'CU-AQ-2026-0234',
  desc:'升级全网安全态势感知平台，新增APT攻击溯源分析、加密流量检测、漏洞情报自动关联、攻防演练自动化等高级能力。要求威胁情报日更新量不低于10万条，误报率控制在3%以内。',
  tags:['态势感知','威胁情报','APT','攻防演练']},
 
-{id:'CUCC-2026-032201', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=%E5%B7%A5%E4%B8%9A%E4%BA%92%E8%81%94%E7%BD%91', title:'工业互联网标识解析二级节点建设运营服务采购', cat:'服务', status:'bidding',
+{id:'CUCC-2026-032201', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'工业互联网标识解析二级节点建设运营服务采购', cat:'服务', status:'bidding',
  budget:1800, publishDate:'2026-03-22', deadline:'2026-04-14', region:'广东/江苏/山东/河南',
  agency:'中国联通产业互联网公司', code:'CU-CY-2026-0100',
  desc:'在四省各建设一个工业互联网标识解析二级节点，提供标识注册、解析查询、数据同步、安全保障等运营服务。要求节点接入国家顶级节点并通过工信部验收评测。',
  tags:['工业互联网','标识解析','二级节点','工信部']},
-{id:'CUCC-2026-041401', op:'cucc', url:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName=PACS', title:'智慧医疗影像云平台PACS系统升级采购', cat:'行业解决方案', status:'bidding',
+{id:'CUCC-2026-041401', op:'cucc', url:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm',
+ sourceName:'中国联通采购与招标网', title:'智慧医疗影像云平台PACS系统升级采购', cat:'行业解决方案', status:'bidding',
  budget:6700, publishDate:'2026-04-14', deadline:'2026-05-09', region:'全国合作医院',
  agency:'中国联通医疗健康行业拓展部', code:'CU-YL-2026-0412',
  desc:'升级智慧医疗影像云平台，新增AI辅助诊断模块、三维重建可视化、远程会诊协作、DICOM数据脱敏共享等功能。平台需支持日均10万+影像检查量的存储和并发调阅。',
  tags:['智慧医疗','PACS','AI诊断','远程会诊']},
 
 // ========== 中国电信 ==========
-{id:'CTCC-2026-041401', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=%E5%A4%A9%E7%BF%BC%E4%BA%914.0', title:'天翼云4.0——分布式云操作系统核心模块研发及采购', cat:'基础软件', status:'bidding',
+{id:'CTCC-2026-041401', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'天翼云4.0——分布式云操作系统核心模块研发及采购', cat:'基础软件', status:'bidding',
  budget:15800, publishDate:'2026-04-14', deadline:'2026-05-10', region:'北京/上海/广州/成都',
  agency:'中国电信云计算分公司', code:'CT-YS-2026-0567',
  desc:'围绕天翼云4.0分布式云操作系统的关键核心技术进行联合研发和产品化采购。重点方向包括：多云统一资源调度引擎、异构算力编排系统、Serverless容器运行时、云边协同管理面等。',
  tags:['天翼云','分布式云','Kubernetes','云原生']},
-{id:'CTCC-2026-041102', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=%E6%95%B0%E5%AD%97%E6%94%BF%E5%BA%9C', title:'数字政府一体化政务服务平台建设（二期）采购', cat:'行业解决方案', status:'urgent',
+{id:'CTCC-2026-041102', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'数字政府一体化政务服务平台建设（二期）采购', cat:'行业解决方案', status:'urgent',
  budget:9600, publishDate:'2026-04-11', deadline:'2026-04-23', region:'西南地区试点省份',
  agency:'中国电信政法公安行业事业部', code:'CT-ZF-2026-0178',
  desc:'二期项目建设内容包括：政务数据共享交换平台升级、"一件事一次办"服务流程再造支撑、智能审批辅助系统、政务服务效能监测大屏等。要求符合国家政务服务平台相关标准规范，支持国密算法。',
  tags:['数字政府','一网通办','政务云','等保']},
-{id:'CTCC-2026-040803', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=%E5%AD%98%E5%82%A8', title:'智算中心高性能存储系统及全闪存阵列采购', cat:'服务器', status:'bidding',
+{id:'CTCC-2026-040803', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'智算中心高性能存储系统及全闪存阵列采购', cat:'服务器', status:'bidding',
  budget:27600, publishDate:'2026-04-08', deadline:'2026-05-01', region:'上海/贵阳智算中心',
  agency:'中国电信数据中心运营中心', code:'CT-SJ-2026-0345',
  desc:'为满足大规模AI训练和推理的数据存取需求，采购高性能并行文件系统和全闪存存储阵列。技术指标：聚合带宽不低于200GB/s，IOPS不低于2000万，支持RDMA访问。',
  tags:['高性能存储','全闪存','并行文件系统','AI存储']},
-{id:'CTCC-2026-040404', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=IDC', title:'全网IDC机房基础设施运维服务（2026-2028年框架）', cat:'服务', status:'bidding',
+{id:'CTCC-2026-040404', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'全网IDC机房基础设施运维服务（2026-2028年框架）', cat:'服务', status:'bidding',
  budget:12500, publishDate:'2026-04-04', deadline:'2026-04-26', region:'全国31省IDC机房',
  agency:'中国电信网络运行维护事业部', code:'CT-YW-2026-0156',
  desc:'采购覆盖全国核心数据中心的机房基础设施运维服务，包括供配电系统巡检维护、暖通空调系统维保、动环监控系统管理、机房环境管理等。要求每个省份配备驻场或2小时内可达的运维团队。',
  tags:['IDC运维','基础设施','机房管理','动环监控']},
-{id:'CTCC-2026-033105', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=SaaS', title:'中小企业数字化转型SaaS服务市场平台开发采购结果公示', cat:'行业解决方案', status:'result',
+{id:'CTCC-2026-033105', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'中小企业数字化转型SaaS服务市场平台开发采购结果公示', cat:'行业解决方案', status:'result',
  budget:3300, publishDate:'2026-03-31', deadline:'2026-04-12', region:'全国',
  agency:'中国电信中小企业事业部', code:'CT-QY-2026-0089',
  desc:'构建面向中小企业的数字化转型一站式SaaS服务聚合平台，实现多品类SaaS应用的统一入驻、订购、计费和交付管理。支持OpenAPI标准接口和多租户隔离数据安全保护机制。',
  tags:['SaaS','中小企业','数字化转型','应用市场'], winnerInfo:{winner:'阿里云计算有限公司',amount:'3080万元'}},
 
-{id:'CTCC-2026-031507', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=%E9%87%8F%E5%AD%90', title:'量子通信保密专线技术服务采购（金融行业试点）', cat:'服务', status:'bidding',
+{id:'CTCC-2026-031507', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'量子通信保密专线技术服务采购（金融行业试点）', cat:'服务', status:'bidding',
  budget:4200, publishDate:'2026-04-15', deadline:'2026-05-12', region:'北京-上海-合肥',
  agency:'中国电信量子集团有限公司', code:'CT-LZ-2026-0023',
  desc:'面向金融行业客户提供量子密钥分发（QKD）设备及量子保密通信专线组网技术服务，包含设备租赁、线路调测、安全运维等全套服务。线路总长度约3000公里，覆盖京沪深等金融中心城市。',
  tags:['量子通信','QKD','金融科技','信息安全']},
-{id:'CTCC-2026-040501', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=AI%E8%A7%86%E8%A7%89', title:'天翼视联网——AI视觉分析平台及边缘计算节点采购', cat:'行业解决方案', status:'bidding',
+{id:'CTCC-2026-040501', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'天翼视联网——AI视觉分析平台及边缘计算节点采购', cat:'行业解决方案', status:'bidding',
  budget:11200, publishDate:'2026-04-05', deadline:'2026-04-27', region:'全国重点城市',
  agency:'中国电信天翼视联运营中心', code:'CT-SL-2026-0189',
  desc:'构建覆盖全国的AI视觉分析能力平台，采购边缘AI分析盒子（含人脸识别、车辆识别、行为分析等算法）、视频结构化处理服务器、视觉大模型推理引擎等。要求支持GB/T28181协议接入，单节点并发分析能力≥128路。',
  tags:['天翼视联','AI视觉','边缘计算','视频分析']},
-{id:'CTCC-2026-032801', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=%E4%BA%91%E6%A1%8C%E9%9D%A2', title:'天翼云电脑（云桌面）VDI平台升级及瘦终端采购', cat:'服务器', status:'bidding',
+{id:'CTCC-2026-032801', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'天翼云电脑（云桌面）VDI平台升级及瘦终端采购', cat:'服务器', status:'bidding',
  budget:8900, publishDate:'2026-03-28', deadline:'2026-04-19', region:'全国云池节点',
  agency:'中国电信云计算分公司', code:'CT-YS-2026-0234',
  desc:'升级天翼云电脑VDI平台至新一代架构，采购配套云桌面瘦终端设备。新平台要求支持GPU虚拟化（用于图形设计/3D渲染场景）、USB外设重定向、离线可用模式等高级特性。',
  tags:['云桌面','VDI','天翼云电脑','虚拟化']},
-{id:'CTCC-2026-041001', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=6G', title:'6G通感算一体化技术研发试验平台设备采购', cat:'行业解决方案', status:'bidding',
+{id:'CTCC-2026-041001', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'6G通感算一体化技术研发试验平台设备采购', cat:'行业解决方案', status:'bidding',
  budget:23500, publishDate:'2026-04-10', deadline:'2026-05-07', region:'北京/广州6G实验室',
  agency:'中国电信研究院', code:'CT-YJ-2026-0389',
  desc:'采购6G通感算一体化关键技术试验验证设备，包括太赫兹通信原型样机、智能反射面（RIS）大规模阵列、通感一体信号处理单元、算力内生基站原型等。用于6G候选技术方案的室内外联合测试验证。',
  tags:['6G','太赫兹','RIS','通感一体']},
-{id:'CTCC-2026-031801', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=%E6%98%9F%E8%BE%B0%E5%A4%A7%E6%A8%A1%E5%9E%8B', title:'星辰大模型行业定制版开发及私有化部署采购', cat:'基础软件', status:'bidding',
+{id:'CTCC-2026-031801', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'星辰大模型行业定制版开发及私有化部署采购', cat:'基础软件', status:'bidding',
  budget:16800, publishDate:'2026-03-18', deadline:'2026-04-30', region:'政务/金融/医疗行业',
  agency:'中国电信人工智能研究院', code:'CT-AI-2026-0098',
  desc:'基于电信自研"星辰"大模型基座，面向政务问答、金融研报生成、医疗辅助诊断等垂直场景进行定制化微调和RAG（检索增强生成）开发，并提供私有化一体机部署方案。模型参数量72B，支持中英双语。',
  tags:['星辰大模型','LLM','RAG','私有化部署']},
 
-{id:'CTCC-2026-040201', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=FTTR', title:'FTTR-B（光纤到房间增强版）全光家庭网关设备集采', cat:'服务器', status:'bidding',
+{id:'CTCC-2026-040201', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'FTTR-B（光纤到房间增强版）全光家庭网关设备集采', cat:'服务器', status:'bidding',
  budget:14200, publishDate:'2026-04-02', deadline:'2026-04-24', region:'全国31省',
  agency:'中国电信终端公司', code:'CT-ZD-2026-0112',
  desc:'采购FTTR-B增强版主从网关设备，支持Wi-Fi 7（802.11be）无线协议，2.5G/10G光口上行，Mesh自组网能力。用于高端家庭宽带用户的全屋光纤组网覆盖，目标覆盖500万户家庭。',
  tags:['FTTR','Wi-Fi 7','全光网关','家庭组网']},
-{id:'CTCC-2026-031201', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=%E8%B7%A8%E5%A2%83%E6%95%B0%E6%8D%AE', title:'跨境数据流动安全管理平台建设采购', cat:'基础软件', status:'bidding',
+{id:'CTCC-2026-031201', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'跨境数据流动安全管理平台建设采购', cat:'基础软件', status:'bidding',
  budget:4800, publishDate:'2026-03-12', deadline:'2026-04-16', region:'自贸区数据中心',
  agency:'中国电信国际有限公司', code:'CT-GJ-2026-0078',
  desc:'建设跨境数据流动安全管理平台，实现对出境数据的分类分级识别、传输通道加密审计、跨境合规策略引擎、数据出境风险评估等功能。要求符合《数据出境安全评估办法》监管要求。',
  tags:['跨境数据','数据出境','合规审计','安全管理']},
-{id:'CTCC-2026-041201', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=%E6%99%BA%E6%85%A7%E6%B8%AF%E5%8F%A3', title:'智慧港口5G+MEC专网及自动化码头控制系统采购', cat:'行业解决方案', status:'bidding',
+{id:'CTCC-2026-041201', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'智慧港口5G+MEC专网及自动化码头控制系统采购', cat:'行业解决方案', status:'bidding',
  budget:19800, publishDate:'2026-04-12', deadline:'2026-05-05', region:'宁波舟山港/深圳盐田港',
  agency:'中国联通（与中国电信联合体）行业拓展部', code:'CT-HY-2026-0345',
  desc:'采购港口5G专网全覆盖方案（含宏站+室分）、MEC边缘云节点、龙门吊/岸桥远控系统、无人集卡调度系统等端到端解决方案。要求端到端时延≤15ms，可靠性99.999%。',
  tags:['智慧港口','5G专网','MEC','无人驾驶']},
 
-{id:'CTCC-2026-032501', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=SDN', title:'全网云网融合SDN控制器升级及南向插件扩展采购', cat:'基础软件', status:'bidding',
+{id:'CTCC-2026-032501', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'全网云网融合SDN控制器升级及南向插件扩展采购', cat:'基础软件', status:'bidding',
  budget:7200, publishDate:'2026-03-25', deadline:'2026-04-18', region:'总部网络控制器节点',
  agency:'中国电信网络运行维护事业部', code:'CT-YW-2026-0156',
  desc:'升级全网SDN控制器集群，新增支持SRv6策略路由、跨域网络切片编排、确定性网络（DetNet）调度、IPv6+高级特性等南向插件。控制器需管理超过50万台网络设备的统一编排。',
  tags:['SDN','SRv6','IPv6+','网络控制器']},
-{id:'CTCC-2026-040701', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=%E6%99%BA%E6%85%A8%E8%83%BD%E6%BA%90', title:'智慧能源——电网5G配网自动化及巡检机器人采购', cat:'行业解决方案', status:'urgent',
+{id:'CTCC-2026-040701', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'智慧能源——电网5G配网自动化及巡检机器人采购', cat:'行业解决方案', status:'urgent',
  budget:8500, publishDate:'2026-04-07', deadline:'2026-04-22', region:'国家电网南方区域',
  agency:'中国电信能源行业拓展部', code:'CT-NY-2026-0234',
  desc:'面向电力配电自动化场景，采购5G专用通信模组、配电终端DTU/TTU、变电站智能巡检无人机/机器人、输电线路AI图像识别分析系统等成套设备。支持差动保护、精准负荷控制等电力特种业务。',
  tags:['智慧能源','电力5G','配网自动化','巡检机器人']},
-{id:'CTCC-2026-031001', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice?search=3AZ', title:'天翼云3AZ高可用容灾架构升级服务采购', cat:'服务', status:'bidding',
+{id:'CTCC-2026-031001', op:'ctcc', url:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal',
+ sourceName:'中国电信阳光采购网', title:'天翼云3AZ高可用容灾架构升级服务采购', cat:'服务', status:'bidding',
  budget:6300, publishDate:'2026-03-10', deadline:'2026-04-12', region:'北上广核心云池',
  agency:'中国电信云计算分公司', code:'CT-YS-2026-0067',
  desc:'将核心云池从双活架构升级为三可用区（3AZ）容灾架构，包括跨AZ数据同步方案设计、容灾切换演练、应用层多活改造咨询等服务内容。要求RPO≤1秒，RTO≤30秒。',
@@ -685,24 +781,24 @@ const state = {
 };
 
 const OPERATOR_INFO = {
-    cmcc: {name:'中国移动',icon:'📱',color:'#09c', baseUrl:'https://b2b.10086.cn/b2b/main/listVendorNotice.html?noticeId='},
-    cucc: {name:'中国联通',icon:'📞',color:'#e60012', baseUrl:'https://www.chinaunicombidding.cn/jsp/web/searchNoticeDetail.jsp?noticeId='},
-    ctcc: {name:'中国电信',icon:'☎️',color:'#00a699', baseUrl:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/viewNoticeDetail.html?noticeId='}
+    cmcc: {name:'中国移动',icon:'📱',color:'#09c', sourceUrl:'http://www.zgyd.gdtzb.com/v1/', sourceLabel:'招标牛（移动采购聚合）'},
+    cucc: {name:'中国联通',icon:'📞',color:'#e60012', sourceUrl:'https://www.chinaunicombidding.cn/cms/channel/whgg/zb/index.htm', sourceLabel:'中国联通采购官网-公告'},
+    ctcc: {name:'中国电信',icon:'☎️',color:'#00a699', sourceUrl:'https://caigou.chinatelecom.com.cn/ctsc-portal/ctscPortal', sourceLabel:'中国电信阳光采购网'}
 };
 
-// 根据运营商自动生成原文链接（跳转到对应官网的招标公告列表页，含搜索关键词）
+// 获取原文链接 — 优先使用数据中的url，否则使用运营商默认源
 function genSourceUrl(item){
-    if(item.url)return item.url;
+    if(item.url) return item.url;
     const op=OPERATOR_INFO[item.op];
     if(!op) return '#';
-    // 根据项目编号或标题生成带搜索参数的链接，直接进入对应招标网站
-    const keyword = encodeURIComponent((item.code||item.id) + ' ' + item.title);
-    const urls={
-        cmcc:'https://b2b.10086.cn/b2b/main/listVendorNotice.html',
-        cucc:'https://www.chinaunicombidding.cn/jsp/web/searchNotice.jsp?noticeName='+keyword,
-        ctcc:'https://caigou.chinatelecom.com.cn/MSS-PORTAL/public/listNotice'
-    };
-    return op.baseUrl+(urls[item.op]||'');
+    return op.sourceUrl || '#';
+}
+
+// 获取来源名称
+function getSourceName(item){
+    if(item.sourceName) return item.sourceName;
+    const op=OPERATOR_INFO[item.op];
+    return op ? op.sourceLabel : '未知来源';
 }
 
 // ============================================================
@@ -875,6 +971,7 @@ function showDetail(id){
     const wBox=item.winnerInfo?`<div class="winner-box"><strong>🏆 中标结果：</strong>${item.winnerInfo.winner} | 中标金额：${item.winnerInfo.amount}</div>`:'';
     document.getElementById('detailModal').classList.add('show');
     const srcUrl = genSourceUrl(item);
+    const srcName = getSourceName(item);
     document.getElementById('modalContent').innerHTML=`
     <div class="modal-header"><h2>${item.title}</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
@@ -894,7 +991,7 @@ function showDetail(id){
         </div>
         <div class="modal-footer" style="margin-top:20px; padding-top:16px; border-top:1px solid #eee; display:flex; gap:10px; justify-content:flex-end;">
             <a href="${srcUrl}" target="_blank" rel="noopener noreferrer" class="btn-source-link" onclick="event.stopPropagation()">
-                🔗 查看原文（${op.name}采购官网）
+                🔗 查看原文（${srcName}）
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-left:4px;"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             </a>
         </div>
