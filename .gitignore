@@ -10,12 +10,12 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *.egg-info/
+*.db
 dist/
 build/
 .venv/
 venv/
 
-# Spider (not needed for GitHub Pages deployment)
-spider/
-start.bat
-crawl.bat
+# Environment
+.env
+.env.local
