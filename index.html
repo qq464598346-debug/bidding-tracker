@@ -1353,19 +1353,17 @@ document.addEventListener('keydown',e=>{
 // ============================================================
 // 🚀 初始化
 // ============================================================
-function init(){
+async function init(){
     // v4.0: 优先从API加载，失败则使用内置数据
-    loadFromAPI().then(success => {
-        if (!success) console.log('[v4.0] 使用内置静态数据（未连接到API服务）');
-        renderStats();
-        renderResults();
-        setupAutoRefresh();
-        showToast('系统就绪 · ' + (success ? '已从API加载最新数据' : '使用内置数据'), 'info', 2000);
-    });
-}
-    toast('success','👋 平台已就绪！共 '+state.allData.length+' 条招标数据');
-    console.log('%c📡 运营商招投标信息跟踪平台','color:#09c;font-size:16px;font-weight:bold;');
-    console.log('%c数据加载完成：'+state.allData.length+' 条记录','color:#666;');
+    const success = await loadFromAPI();
+    if (!success) console.log('[v4.0] 使用内置静态数据（未连接到API服务）');
+    renderStats();
+    renderResults();
+    setupAutoRefresh();
+    toast('success', '👋 平台已就绪！共 ' + state.allData.length + ' 条招标数据 · ' + (success ? 'API实时数据' : '内置静态数据'));
+    showToast('系统就绪 · ' + (success ? '已从API加载最新数据' : '使用内置数据'), 'info', 2000);
+    console.log('%c📡 运营商招投标信息跟踪平台', 'color:#09c;font-size:16px;font-weight:bold;');
+    console.log('%c数据加载完成：' + state.allData.length + ' 条记录', 'color:#666;');
 }
 
 // 启动
