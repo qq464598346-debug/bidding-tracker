@@ -428,37 +428,63 @@
 //      - 免费额度: 5000次/天
 //   🔗 ggzy.gov.cn: https://data.ggzy.gov.cn/  （全国公共资源交易数据）
 // ============================================================
-// v4.0: API动态数据配置
+// v5.1: API动态数据配置 — 修复 file:// 协议下无法连接API的问题
 // ============================================================
+
+// 自动检测API地址：支持 localhost/127.0.0.1/file:// 等所有场景
+function detectApiBase() {
+    const host = location.hostname || '';
+    // HTTP协议下的localhost/127.0.0.1 直接使用
+    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:8765';
+    // file:// 协议（本地双击打开html）→ 也尝试连接本地API
+    if (location.protocol === 'file:') return 'http://localhost:8765';
+    // 其他情况（GitHub Pages等）→ 不启用API
+    return '';
+}
+
 const API_CONFIG = {
     enabled: true,
-    baseUrl: (location.hostname==='localhost'||location.hostname==='127.0.0.1')
-        ? 'http://localhost:8765' : '',
+    baseUrl: detectApiBase(),
     endpoints: { bidding:'/api/bidding', stats:'/api/stats', crawl:'/api/crawl', sources:'/api/sources' }
 };
+
+// 运营商ID映射：API返回值 → UI显示值（解决chinamobile/cmcc不匹配问题）
+const OP_MAP = {
+    chinamobile:'cmcc', chinaunicom:'cucc', chinatelecom:'ctcc',
+    cmcc:'cmcc', cucc:'cucc', ctcc:'ctcc',
+    移动:'cmcc', 联通:'cucc', 电信:'ctcc'
+};
+
 const DataLoader = {
     async loadStats(){
-        if(!API_CONFIG.enabled)return null;
+        if(!API_CONFIG.enabled||!API_CONFIG.baseUrl)return null;
         try{const r=await fetch(API_CONFIG.baseUrl+API_CONFIG.endpoints.stats,{signal:AbortSignal.timeout(5000)});const j=await r.json();return j?.data||null}
         catch(e){console.warn('[API]统计失败:',e.message);return null}
     },
     async loadBidding(p={}){
-        if(!API_CONFIG.enabled)return null;
+        if(!API_CONFIG.enabled||!API_CONFIG.baseUrl)return null;
         try{
             const qs=new URLSearchParams({limit:p.limit||200,sort_by:'publish_time',order:'desc',...p}).toString();
             const r=await fetch(API_CONFIG.baseUrl+API_CONFIG.endpoints.bidding+'?'+qs,{signal:AbortSignal.timeout(10000)});
             const j=await r.json();
-            return(j?.data?.items||[]).map(i=>({
-                id:i.id||i.project_code||('api-'+Math.random().toString(36).substr(2,9)),
-                op:i.operator||'other',title:i.title||'',code:i.project_code||i.code||'',
-                budget:i.budget||0,cat:i.category||i.cat||'服务',
-                status:{bidding:'bidding',upcoming:'upcoming',closing_soon:'urgent',result_published:'ended',ended:'ended'}[i.status]||'bidding',
-                publishDate:i.publish_time||i.publishDate||i.date||'',deadline:i.deadline||'',
-                region:i.region||'',agency:i.purchaser||i.agency||'',
-                sourceName:{yifangbao:'乙方宝',xunbiaobao:'百度寻标宝'}[i.source]||i.source||i.sourceName||'API',
-                url:i.url||'#',desc:i.summary||i.desc||i.title||'',
-                tags:i.ai_tags||i.tags||[],score:i.ai_relevance_score||0
-            }))
+            // v5.1: 一次映射完成，直接产出UI可用的格式（不再二次映射）
+            return(j?.data?.items||[]).map(i=>{
+                const rawOp=(i.operator||'other').toLowerCase();
+                return {
+                    id:i.id||i.project_code||('api-'+Math.random().toString(36).substr(2,9)),
+                    op:OP_MAP[rawOp]||OP_MAP[i.operator]||'other',
+                    title:i.title||'',code:i.project_code||i.code||'',
+                    budget:Number(i.budget)||0,cat:i.category||i.cat||'服务',
+                    status:{bidding:'bidding',upcoming:'upcoming',closing_soon:'urgent',result_published:'ended',ended:'ended'}[i.status]||'bidding',
+                    publishDate:(i.publish_time||i.publishDate||i.date||'').substring(0,10),
+                    deadline:(i.deadline||i.open_time||'').substring(0,10),
+                    region:i.region||'',agency:i.purchaser||i.agency||'',
+                    sourceName:{yifangbao:'乙方宝',xunbiaobao:'百度寻标宝'}[i.source]||i.source||i.sourceName||'乙方宝',
+                    url:i.url||'#',desc:i.summary||i.desc||i.title||'',
+                    tags:Array.isArray(i.ai_tags)&&i.ai_tags.length>0?i.ai_tags:(Array.isArray(i.tags)?i.tags:[i.category||i.cat||'其他']),
+                    score:Number(i.ai_relevance_score)||0,winnerInfo:i.winnerInfo||null
+                };
+            })
         }catch(e){console.warn('[API]列表失败:',e.message);return null}
     },
     async triggerCrawl(){
@@ -936,8 +962,9 @@ const state = {
 
 const OPERATOR_INFO = {
     cmcc: {name:'中国移动',icon:'📱',color:'#09c', sourceUrl:'https://www.yfbzb.com/zbzt/40', sourceLabel:'乙方宝·移动采购与招标网'},
-    cucc: {name:'中国联通',icon:'📞',color:'#e60012', sourceUrl:'https://www.yfbzb.com/search/invitedBidSearch?keyword=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A', sourceLabel:'乙方宝·联通采购与招标网'},
-    ctcc: {name:'中国电信',icon:'☎️',color:'#00a699', sourceUrl:'https://www.yfbzb.com/zbzt/84', sourceLabel:'乙方宝·电信采购与招标网'}
+    cucc: {name:'中国联通',icon:'📞',color:'#e60012', sourceUrl:'https://www.yfbzb.com/search?keyword=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A', sourceLabel:'乙方宝·联通采购与招标网'},
+    ctcc: {name:'中国电信',icon:'☎️',color:'#00a699', sourceUrl:'https://www.yfbzb.com/zbzt/84', sourceLabel:'乙方宝·电信采购与招标网'},
+    other: {name:'其他来源',icon:'📋',color:'#666', sourceUrl:'#', sourceLabel:'其他'}
 };
 
 // 获取原文链接 — 优先使用数据中的url，否则使用运营商默认源
@@ -990,6 +1017,7 @@ function autoUpdateStatus(item) {
 // 📊 渲染统计面板
 // ============================================================
 function renderStats() {
+    try {
     let data=state.allData.map(autoUpdateStatus);
     // 总览统计
     const total=data.length;
@@ -1015,6 +1043,7 @@ function renderStats() {
             <div class="op-detail">预算 ¥${formatBudget(data.filter(i=>i.op===k).reduce((s,i)=>s+i.budget,0))}</div>
         </div>
     </div>`).join('');
+    } catch(e) { console.error('[renderStats] error:', e); }
 }
 
 // ============================================================
@@ -1038,6 +1067,7 @@ function getFilteredData() {
 }
 
 function renderResults() {
+    try {
     const filtered=getFilteredData();
     const total=filtered.length;
     const start=(state.currentPage-1)*state.pageSize;
@@ -1067,10 +1097,11 @@ function renderResults() {
     } else {
         document.getElementById('pagination').innerHTML='';
     }
+    } catch(e) { console.error('[renderResults] error:', e); }
 }
 
 function renderCard(item){
-    const st=getStatusInfo(item.status),daysLeft=getDaysLeft(item.deadline),op=OPERATOR_INFO[item.op];
+    const st=getStatusInfo(item.status),daysLeft=getDaysLeft(item.deadline),op=OPERATOR_INFO[item.op]||OPERATOR_INFO['other'];
     const srcUrl=genSourceUrl(item);
     return `<div class="bidding-card" onclick="showDetail('${item.id}')">
     <div class="card-header"><span class="card-operator ${item.op}">${op.icon}${op.name}</span><span class="card-status-badge ${st.c}">${st.t}</span></div>
@@ -1088,7 +1119,7 @@ function renderCard(item){
 }
 
 function renderRow(item){
-    const st=getStatusInfo(item.status),op=OPERATOR_INFO[item.op];
+    const st=getStatusInfo(item.status),op=OPERATOR_INFO[item.op]||OPERATOR_INFO['other'];
     const srcUrl=genSourceUrl(item);
     return `<div class="bidding-row" onclick="showDetail('${item.id}')">
     <div class="row-op-icon" style="background:${op.color}">${op.icon}</div>
@@ -1187,35 +1218,19 @@ async function triggerUpdate(){
     }
 }
 
-// v4.0: 从API动态加载核心函数
+// v5.1: 从API动态加载核心函数（修复：不再二次映射，直接使用loadBidding的输出）
 async function loadFromAPI(silent=false){
-    if(!DataLoader.isAvailable()){if(!silent)console.log('[v4.0] API不可用，使用内置静态数据');return false}
+    if(!DataLoader.isAvailable()){if(!silent)console.log('[v5.1] API不可用，使用内置静态数据');return false}
     try{
         const data=await DataLoader.loadBidding();
+        // loadBidding() 已经完成了所有字段映射，直接使用
         if(data&&data.length>0){
-            // 替换全局数据为API返回的数据
-            const mapped=data.map(d=>({
-                id:d.id||'api-'+Math.random().toString(36).substr(2,9),
-                op:d.op||'other',
-                title:d.title||'',code:d.code||'',
-                budget:Number(d.budget)||0,
-                cat:d.cat||d.category||'服务',
-                status:d.status||'bidding',
-                publishDate:d.publishDate||d.date||new Date().toISOString().substring(0,10),
-                deadline:d.deadline||'',
-                region:d.region||'',
-                agency:d.agency||d.purchaser||'',
-                sourceName:d.sourceName||d.source||'API',
-                url:d.url||'#',
-                desc:d.desc||d.summary||d.title||'',
-                tags:Array.isArray(d.tags)&&d.tags.length>0?d.tags:[d.cat||d.category||'其他'],
-                winnerInfo:d.winnerInfo||null
-            }));
-            
-            if(mapped.length>0){state.allData=mapped;return true}
+            state.allData=data;
+            console.log('[v5.1] 从API加载了 '+data.length+' 条真实招标数据');
+            return true;
         }
         return false;
-    }catch(e){console.error('[v4.0] API加载异常:',e);return false}
+    }catch(e){console.error('[v5.1] API加载异常:',e);return false}
 }
 
 function simulateDataRefresh(){
@@ -1300,7 +1315,7 @@ function exportToExcel(){
     const data=getExportData();
     let xlsContent='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
     xlsContent+='<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>招投标数据</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
-    xlsContent+='<style>td{mso-number-format:\\@;}.num{mso-number-format:#\\,##0;}.money{mso-number-format:\\#\\,##0_);[Red]\\(\\#\\,##0\\);}body{font-family:微软雅黑;font-size:12px;}th{background:#1a1a2e;color:white;font-weight:bold;text-align:center;}</style></head><body>';
+    xlsContent += '<style>' + 'td{mso-number-format:\\@}' + '.num{mso-number-format:#\\,##0}' + '.money{text-align:right}' + 'body{font-family:微软雅黑}' + 'th{background:#1a1a2e;color:#fff}' + '</style></head><body>';
     xlsContent+='<table border="1"><tr><th>序号</th><th>运营商</th><th>项目名称</th><th>编号</th><th>类别</th><th>状态</th><th>预算(万元)</th><th>发布日期</th><th>截止日期</th><th>地区</th><th>采购机构</th></tr>';
     data.forEach((i,idx)=>{
         const s=getStatusInfo(i.status);
@@ -1376,15 +1391,20 @@ document.addEventListener('keydown',e=>{
 // 🚀 初始化
 // ============================================================
 async function init(){
-    // v4.0: 优先从API加载，失败则使用内置数据
-    const success = await loadFromAPI();
-    if (!success) console.log('[v4.0] 使用内置静态数据（未连接到API服务）');
-    renderStats();
-    renderResults();
-    setupAutoRefresh();
-    toast('success', '平台已就绪！共 ' + state.allData.length + ' 条招标数据 · ' + (success ? 'API实时数据' : '内置静态数据'));
-    console.log('%c📡 运营商招投标信息跟踪平台', 'color:#09c;font-size:16px;font-weight:bold;');
-    console.log('%c数据加载完成：' + state.allData.length + ' 条记录', 'color:#666;');
+    try {
+        // v4.0: 优先从API加载，失败则使用内置数据
+        const success = await loadFromAPI();
+        if (!success) console.log('[v4.0] 使用内置静态数据（未连接到API服务）');
+        renderStats();
+        renderResults();
+        setupAutoRefresh();
+        toast('success', '平台已就绪！共 ' + state.allData.length + ' 条招标数据 · ' + (success ? 'API实时数据' : '内置静态数据'));
+        console.log('%c📡 运营商招投标信息跟踪平台', 'color:#09c;font-size:16px;font-weight:bold;');
+        console.log('%c数据加载完成：' + state.allData.length + ' 条记录', 'color:#666;');
+    } catch(e) {
+        console.error('[FATAL] 初始化失败:', e);
+        alert('页面初始化出错: ' + e.message);
+    }
 }
 
 // 启动
